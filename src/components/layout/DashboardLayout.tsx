@@ -1,0 +1,190 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useAuth } from '@/context/auth-context';
+import { useRouter, usePathname } from 'next/navigation';
+import { 
+  LayoutDashboard, 
+  Users, 
+  GraduationCap, 
+  Calendar, 
+  Search, 
+  Bell, 
+  LogOut,
+  Menu,
+  X,
+  CreditCard,
+  MessageSquare,
+  FileText,
+  BarChart3,
+  BookOpen,
+  Loader2
+} from 'lucide-react';
+
+const ADMIN_LINKS = [
+  { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/leads', icon: Search, label: 'Leads' },
+  { href: '/admin/students', icon: GraduationCap, label: 'Students' },
+  { href: '/admin/teachers', icon: Users, label: 'Teachers' },
+  { href: '/admin/batches', icon: BookOpen, label: 'Batches' },
+  { href: '/admin/fees', icon: CreditCard, label: 'Fees' },
+  { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
+];
+
+const TEACHER_LINKS = [
+  { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'My Dashboard' },
+  { href: '/teacher/batches', icon: BookOpen, label: 'My Batches' },
+  { href: '/teacher/schedule', icon: Calendar, label: 'Class Schedule' },
+  { href: '/teacher/earnings', icon: CreditCard, label: 'Earnings' },
+];
+
+const PARENT_LINKS = [
+  { href: '/parent/dashboard', icon: LayoutDashboard, label: 'Overview' },
+  { href: '/parent/attendance', icon: Calendar, label: 'Attendance' },
+  { href: '/parent/marks', icon: FileText, label: 'Test Marks' },
+  { href: '/parent/fees', icon: CreditCard, label: 'Pay Fees' },
+  { href: '/parent/feedback', icon: MessageSquare, label: 'Feedback' },
+];
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Protection is now primarily handled by middleware.ts
+  if (isLoading || !user) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--background)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader2 className="animate-spin" size={32} color="var(--primary)" />
+          <p style={{ marginTop: '1rem', color: 'var(--muted)', fontWeight: '500' }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const links = user.role === 'ADMIN' ? ADMIN_LINKS : user.role === 'TEACHER' ? TEACHER_LINKS : PARENT_LINKS;
+
+  return (
+    <div className="dashboard-container">
+      {/* Sidebar - Desktop & Mobile via classes */}
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <GraduationCap size={20} />
+          </div>
+          <span style={{ fontWeight: '700', fontSize: '1.25rem' }}>Extra Classes</span>
+          {/* Close button for mobile */}
+          <button 
+            className="hideDesktop"
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{ marginLeft: 'auto', display: 'none' }}
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <nav style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {links.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <button
+                key={link.href}
+                onClick={() => {
+                  router.push(link.href);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="btn"
+                style={{ 
+                  justifyContent: 'flex-start',
+                  backgroundColor: isActive ? 'var(--sidebar-active)' : 'transparent',
+                  color: isActive ? 'var(--primary)' : 'var(--muted)',
+                  width: '100%',
+                  padding: '0.75rem 1rem'
+                }}
+              >
+                <Icon size={20} />
+                <span>{link.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div style={{ padding: '1rem', borderTop: '1px solid var(--sidebar-border)' }}>
+          <button 
+            onClick={logout}
+            className="btn" 
+            style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--destructive)', gap: '0.75rem' }}
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="main-content">
+        {/* Header */}
+        <header style={{ 
+          height: '64px', 
+          backgroundColor: 'white', 
+          borderBottom: '1px solid var(--card-border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 1.5rem',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30
+        }}>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="hideDesktop"
+            style={{ border: '1px solid var(--card-border)', padding: '0.25rem', borderRadius: '4px' }}
+          >
+            <Menu size={24} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: 'auto' }}>
+            <button className="btn btn-secondary" style={{ padding: '0.5rem', borderRadius: '50%' }}>
+              <Bell size={20} />
+            </button>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>{user.name}</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{user.role}</div>
+            </div>
+            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--secondary)', overflow: 'hidden' }}>
+              <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`} alt="user" />
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main style={{ padding: '2rem', maxWidth: '1440px', margin: '0 auto' }}>
+          {children}
+        </main>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          style={{ position: 'fixed', inset: 0, zIndex: 35, backgroundColor: 'rgba(0,0,0,0.5)' }} 
+          className="hideDesktop"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Custom Styles for this specific layout fix */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (min-width: 1024px) {
+          .hideDesktop { display: none !important; }
+        }
+        @media (max-width: 1023px) {
+          .hideDesktop { display: block !important; }
+        }
+      `}} />
+    </div>
+  );
+}

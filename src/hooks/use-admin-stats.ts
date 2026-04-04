@@ -1,0 +1,95 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase-client';
+
+export interface AdminStats {
+  total_leads: number;
+  total_converted_students: number;
+  active_students: number;
+  total_teachers: number;
+  total_batches: number;
+  new_leads_this_month: number;
+  demo_scheduled_count: number;
+  demo_completed_count: number;
+  monthly_revenue: number;
+  total_pending_fees: number;
+  total_teacher_payout_liability: number;
+  conversion_rate: number;
+  retention_rate: number;
+  batch_fill_rate: number;
+}
+
+export function useAdminStats() {
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      // Fetch from the view
+      const { data, error } = await supabase
+        .from('view_admin_dashboard_stats')
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      setStats(data);
+    } catch (err) {
+      console.error('Error fetching admin stats:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+        },
+        (payload) => {
+          console.log('Database changed, refreshing stats...', payload);
+          fetchStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return { stats, loading, error, refresh: fetchStats };
+}
+
+export function useRevenueTrends() {
+  const [trends, setTrends] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTrends() {
+      try {
+        const { data, error } = await supabase
+          .from('view_revenue_trends')
+          .select('*');
+        if (error) throw error;
+        setTrends(data?.reverse() || []);
+      } catch (err) {
+        console.error('Error fetching revenue trends:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrends();
+  }, []);
+
+  return { trends, loading };
+}
