@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
 import LeadForm from '@/components/forms/LeadForm';
+import LeadConversionForm from '@/components/forms/LeadConversionForm';
 
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -25,6 +26,7 @@ export default function AdminLeadsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [conversionLead, setConversionLead] = useState<any | null>(null);
 
   const fetchLeads = async () => {
     try {
@@ -103,6 +105,24 @@ export default function AdminLeadsPage() {
           }}
           onCancel={() => setIsModalOpen(false)}
         />
+      </ActionModal>
+
+      <ActionModal
+        isOpen={!!conversionLead}
+        onClose={() => setConversionLead(null)}
+        title="Convert Lead to Student"
+        description={`Configure batch assignments and system access for ${conversionLead?.student_name}.`}
+      >
+        {conversionLead && (
+          <LeadConversionForm 
+            lead={conversionLead}
+            onSuccess={() => {
+              setConversionLead(null);
+              fetchLeads();
+            }}
+            onCancel={() => setConversionLead(null)}
+          />
+        )}
       </ActionModal>
 
       <div className="card" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -185,9 +205,19 @@ export default function AdminLeadsPage() {
                         <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
                           <Mail size={16} />
                         </button>
-                        <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
-                          <MoreVertical size={16} />
-                        </button>
+                        {lead.conversion_status !== 'Converted' ? (
+                          <button 
+                            onClick={() => setConversionLead(lead)}
+                            className="btn btn-primary" 
+                            style={{ padding: '0.5rem', backgroundColor: '#10b981', fontSize: '0.75rem' }}
+                          >
+                            Convert
+                          </button>
+                        ) : (
+                          <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
+                            <CheckCircle2 size={16} color="#10b981" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
