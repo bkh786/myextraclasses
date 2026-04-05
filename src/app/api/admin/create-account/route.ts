@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
     // 2. Set strict Auth Profile Mapping
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert(
-      { id: userId, name, role: role.toUpperCase(), email, updated_at: new Date().toISOString() },
+      { id: userId, name, role: role.toUpperCase(), email },
       { onConflict: 'id' }
     );
 
