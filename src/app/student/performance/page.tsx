@@ -58,11 +58,14 @@ export default function StudentPerformancePage() {
       ) : (
         <>
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-             <div style={{ padding: '1.25rem', backgroundColor: '#fff7ed', borderBottom: '1px solid #ffedd5' }}>
-               <h2 style={{ fontSize: '1rem', fontWeight: '700', color: '#9a3412', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                 <FileText size={20} /> Pending Assessments To Take
-               </h2>
-             </div>
+              <div style={{ padding: '1.25rem', backgroundColor: '#fff7ed', borderBottom: '1px solid #ffedd5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: '700', color: '#9a3412', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FileText size={20} /> Active Assessment Links
+                </h2>
+                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#c2410c', backgroundColor: '#ffedd5', padding: '0.25rem 0.75rem', borderRadius: '12px' }}>
+                  {pendingAssessments.length} Pending
+                </div>
+              </div>
              <div className="table-container">
                <table>
                  <thead>
@@ -95,11 +98,14 @@ export default function StudentPerformancePage() {
           </div>
 
           <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-             <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--card-border)' }}>
-               <h2 style={{ fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                 <Award size={20} color="var(--primary)" /> Evaluation Results
-               </h2>
-             </div>
+              <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Award size={20} color="#6366f1" /> Monthly Evaluation Results
+                </h2>
+                <div style={{ fontSize: '0.75rem', fontWeight: '600', color: 'var(--primary)', backgroundColor: '#e0e7ff', padding: '0.25rem 0.75rem', borderRadius: '12px' }}>
+                  {scores.length} Released
+                </div>
+              </div>
              <div className="table-container">
                <table>
                  <thead>

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase-client';
 import { useAuth } from '@/context/auth-context';
-import { Loader2, Save, GraduationCap } from 'lucide-react';
+import { Loader2, Save, GraduationCap, Plus, FileText, ExternalLink } from 'lucide-react';
+import ActionModal from '@/components/common/ActionModal';
 
 export default function TeacherPerformanceEntryPage() {
   const { user } = useAuth();
@@ -12,10 +13,12 @@ export default function TeacherPerformanceEntryPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [scores, setScores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
   const [selectedBatchId, setSelectedBatchId] = useState('');
   const [selectedAssessmentId, setSelectedAssessmentId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newAsm, setNewAsm] = useState({ title: '', link: '', batch_id: '' });
+  const [asmLoading, setAsmLoading] = useState(false);
 
   useEffect(() => {
     async function loadInitial() {
@@ -105,7 +108,81 @@ export default function TeacherPerformanceEntryPage() {
           <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Student Performance Entry</h1>
           <p style={{ color: 'var(--muted)' }}>Record marks derived from your Google Forms assessments against the student roster.</p>
         </div>
+        <button onClick={() => setIsModalOpen(true)} className="btn btn-primary">
+          <Plus size={18} /> Create New Assessment
+        </button>
       </div>
+
+      <ActionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Create New Assessment"
+        description="Launch a new Google Forms test for your students."
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label style={{ fontSize: '0.875rem', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Assessment Title *</label>
+            <input 
+              type="text" 
+              className="input" 
+              placeholder="e.g. Monthly Maths Quiz - Nov" 
+              value={newAsm.title}
+              onChange={(e) => setNewAsm(p => ({ ...p, title: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.875rem', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Google Forms Link *</label>
+            <input 
+              type="url" 
+              className="input" 
+              placeholder="https://forms.gle/..." 
+              value={newAsm.link}
+              onChange={(e) => setNewAsm(p => ({ ...p, link: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: '0.875rem', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Target Batch *</label>
+            <select 
+              className="input" 
+              value={newAsm.batch_id}
+              onChange={(e) => setNewAsm(p => ({ ...p, batch_id: e.target.value }))}
+            >
+              <option value="">-- Select Batch --</option>
+              {batches.map(b => (
+                <option key={b.batch_id} value={b.batch_id}>{b.name}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>
+            <button 
+              onClick={async () => {
+                if (!newAsm.title || !newAsm.link || !newAsm.batch_id || !user) return alert('Fill all fields');
+                setAsmLoading(true);
+                await supabase.from('assessments').insert([{
+                  title: newAsm.title,
+                  google_form_link: newAsm.link,
+                  batch_id: newAsm.batch_id,
+                  teacher_id: user.id
+                }]);
+                setAsmLoading(false);
+                setIsModalOpen(false);
+                setNewAsm({ title: '', link: '', batch_id: '' });
+                // Reload assessments if needed (state is already synced via useEffect on batchId changes)
+                if (selectedBatchId === newAsm.batch_id) {
+                   const { data } = await supabase.from('assessments').select('*').eq('batch_id', selectedBatchId);
+                   if (data) setAssessments(data);
+                }
+              }} 
+              disabled={asmLoading}
+              className="btn btn-primary" 
+              style={{ flex: 1 }}
+            >
+              {asmLoading ? <Loader2 className="animate-spin" size={18} /> : 'Create Link'}
+            </button>
+          </div>
+        </div>
+      </ActionModal>
 
       <div className="card" style={{ display: 'flex', gap: '1.5rem', padding: '1.5rem', backgroundColor: 'var(--secondary)' }}>
         <div style={{ flex: 1 }}>
