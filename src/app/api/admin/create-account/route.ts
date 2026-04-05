@@ -46,9 +46,10 @@ export async function POST(req: Request) {
     const userId = authData.user.id;
 
     // 2. Set strict Auth Profile Mapping
-    const { error: profileError } = await supabaseAdmin.from('profiles').insert([
-      { id: userId, name, role: role.toUpperCase(), email }
-    ]);
+    const { error: profileError } = await supabaseAdmin.from('profiles').upsert(
+      { id: userId, name, role: role.toUpperCase(), email, updated_at: new Date().toISOString() },
+      { onConflict: 'id' }
+    );
 
     if (profileError) {
       // If profile fails, ideally we rollback, but for now we throw error
