@@ -28,32 +28,11 @@ export default function AdminBatchesPage() {
   const fetchBatches = async () => {
     try {
       setLoading(true);
-      // Fetch separately to avoid internal relation bugs
-      const [batchesRes, teachersRes] = await Promise.all([
-        supabase.from('batches').select('*').order('created_at', { ascending: false }),
-        supabase.from('teachers').select('teacher_id, name')
-      ]);
-
-      if (batchesRes.error) throw batchesRes.error;
-
-      // Manually map logic
-      const teachersMap = new Map();
-      if (teachersRes.data) {
-        teachersRes.data.forEach(t => {
-          teachersMap.set(t.teacher_id, t.name);
-        });
-      }
-
-      let finalData: any = [];
+      const res = await fetch('/api/admin/batches');
+      const data = await res.json();
       
-      if (batchesRes.data) {
-         finalData = batchesRes.data.map(b => ({
-            ...b,
-            teachers: { name: teachersMap.get(b.teacher_id) || null }
-         }));
-      }
-
-      setBatches(finalData);
+      if (!res.ok) throw new Error(data.error);
+      setBatches(data || []);
     } catch (error) {
       console.error('Error fetching batches:', error);
     } finally {

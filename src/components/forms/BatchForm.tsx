@@ -117,11 +117,13 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
       if (formData.teacher_payout) payload.teacher_payout = parseFloat(formData.teacher_payout);
       if (formData.zoom_link) payload.zoom_link = formData.zoom_link;
 
-      const { error: insertError } = await supabase
-        .from('batches')
-        .insert([payload]);
-
-      if (insertError) throw insertError;
+      const res = await fetch('/api/admin/batches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
       setSuccess(true);
       setTimeout(() => {

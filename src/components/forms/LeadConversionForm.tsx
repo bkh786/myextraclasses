@@ -23,18 +23,12 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
 
   useEffect(() => {
     async function fetchOptions() {
-      const [batchesRes, teachersRes] = await Promise.all([
-        supabase.from('batches').select('*'),
-        supabase.from('teachers').select('teacher_id, name')
-      ]);
-      
-      if (batchesRes.data) {
-         const tMap = new Map(teachersRes.data?.map(t => [t.teacher_id, t.name]) || []);
-         const enriched = batchesRes.data.map(b => ({
-            ...b,
-            teachers: { name: tMap.get(b.teacher_id) || 'Unassigned' }
-         }));
-         setBatches(enriched);
+      try {
+        const res = await fetch('/api/admin/batches');
+        const data = await res.json();
+        if (res.ok) setBatches(data);
+      } catch(err) {
+        console.error(err);
       }
     }
     fetchOptions();
