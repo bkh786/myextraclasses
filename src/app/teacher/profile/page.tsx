@@ -30,9 +30,23 @@ export default function TeacherProfilePage() {
     if (!user) return;
     setIsSaving(true);
     
-    // Updates local custom tables (does not force login auth email swap unless mapped explicitly)
-    await supabase.from('profiles').update({ phone: profileData.phone, email: profileData.email }).eq('id', user.id);
-    await supabase.from('teachers').update({ phone: profileData.phone, email: profileData.email }).eq('teacher_id', user.id);
+    try {
+      const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+           userId: user.id,
+           role: 'TEACHER',
+           phone: profileData.phone,
+           email: profileData.email
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to update profile');
+    } catch(err) {
+      console.error(err);
+      alert("Failed updating records.");
+    }
     
     setIsSaving(false);
     setIsEditing(false);

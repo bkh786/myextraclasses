@@ -30,10 +30,23 @@ export default function StudentProfilePage() {
     if (!user) return;
     setIsSaving(true);
     
-    // Updates local custom tables (does not force login auth email swap unless mapped explicitly)
-    await supabase.from('profiles').update({ phone: profileData.phone, email: profileData.email }).eq('id', user.id);
-    // Student Table doesn't explicitly store email/phone independently, it queries from Profiles via ID, but we try anyway just in case:
-    await supabase.from('leads').update({ phone: profileData.phone }).eq('lead_id', user.id).select().limit(1).maybeSingle();
+    try {
+      const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+           userId: user.id,
+           role: 'STUDENT',
+           phone: profileData.phone,
+           email: profileData.email
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to update profile');
+    } catch(err) {
+      console.error(err);
+      alert("Failed updating records.");
+    }
     
     setIsSaving(false);
     setIsEditing(false);
