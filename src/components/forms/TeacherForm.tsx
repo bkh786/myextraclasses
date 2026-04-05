@@ -39,22 +39,32 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
     setError(null);
 
     try {
-      const { error: insertError } = await supabase
-        .from('teachers')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: `${countryCode}${phoneNumber}`,
-            subjects: formData.subjects,
-            classes: formData.classes,
-            experience: formData.experience,
-            salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
-            status: formData.status
+      const res = await fetch('/api/admin/create-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          name: formData.name,
+          role: 'TEACHER',
+          details: {
+            phone: `${countryCode}${phoneNumber}`
           }
-        ]);
+        })
+      });
 
-      if (insertError) throw insertError;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create teacher account');
+
+      // Additional fields not covered by basic trigger
+      if (formData.subjects || formData.classes || formData.experience || formData.salary_per_batch) {
+        await supabase.from('teachers').update({
+          subjects: formData.subjects,
+          classes: formData.classes,
+          experience: formData.experience,
+          salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
+          status: formData.status
+        }).eq('teacher_id', data.user.id);
+      }
 
       setSuccess(true);
       setTimeout(() => {

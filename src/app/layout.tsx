@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+      <body style={{ minHeight: '100vh', width: '100%', margin: 0, display: 'flex', flexDirection: 'column' }}>
         <AuthProvider>
           {children}
         </AuthProvider>
