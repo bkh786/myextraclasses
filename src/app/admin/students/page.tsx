@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Users, 
   Search, 
@@ -17,6 +18,7 @@ import ActionModal from '@/components/common/ActionModal';
 import StudentForm from '@/components/forms/StudentForm';
 
 export default function StudentsPage() {
+  const router = useRouter();
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -155,8 +157,12 @@ export default function StudentsPage() {
                       )}
                     </td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                      <button className="btn" style={{ padding: '0.25rem', borderRadius: '4px' }}>
-                         <MoreVertical size={18} color="var(--muted)" />
+                      <button 
+                        onClick={() => router.push(`/admin/students/${student.student_id || student.id}`)}
+                        className="btn btn-secondary" 
+                        style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                      >
+                        View Details
                       </button>
                     </td>
                   </tr>
