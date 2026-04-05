@@ -28,7 +28,7 @@ export default function StudentsPage() {
       const { data, error } = await supabase
         .from('students')
         .select('*')
-        .order('join_date', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       setStudents(data || []);

@@ -19,7 +19,6 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
   const [endTime, setEndTime] = useState('');
 
   const [formData, setFormData] = useState({
-    name: '',
     class: '',
     subject: '',
     teacher_id: '',
@@ -100,8 +99,12 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
     const finalTiming = `${formData.days}, ${start12} - ${endTime}`;
 
     try {
+      const selectedTeacher = teachers.find(t => (t.teacher_id || t.id) === formData.teacher_id);
+      const tName = selectedTeacher ? selectedTeacher.name.split(' ')[0] : 'Open';
+      const autoBatchName = `${tName} | ${start12}`;
+
       const payload: any = {
-        name: formData.name,
+        name: autoBatchName,
         class: formData.class,
         subject: formData.subject,
         timing: finalTiming,
@@ -149,7 +152,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
           <CheckCircle size={32} />
         </div>
         <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Batch Created!</h3>
-        <p style={{ color: '#64748b' }}>New batch "{formData.name}" is now open for enrollment.</p>
+        <p style={{ color: '#64748b' }}>Your new batch is now explicitly mapped to the system.</p>
       </div>
     );
   }
@@ -164,10 +167,6 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2">
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Batch Name *</label>
-          <input type="text" name="name" required placeholder="e.g. Physics Grade 10 – Morning" className="input" value={formData.name} onChange={handleChange} />
-        </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Class *</label>
           <select name="class" required className="input" style={{ width: '100%' }} value={formData.class} onChange={handleChange}>

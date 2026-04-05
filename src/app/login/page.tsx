@@ -68,21 +68,9 @@ function LoginForm() {
   return (
     <>
       <div style={{ marginBottom: '2.5rem' }}>
-        <div style={{ 
-          width: '64px', 
-          height: '64px', 
-          backgroundColor: 'var(--primary)', 
-          borderRadius: '16px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          margin: '0 auto 1.5rem',
-          color: 'white',
-          boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)'
-        }}>
-          <GraduationCap size={32} />
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <img src="/logo.png" alt="Extra Classes" style={{ height: '80px', objectFit: 'contain' }} />
         </div>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--foreground)', letterSpacing: '-0.025em' }}>Extra Classes</h1>
         <p style={{ 
           color: 'var(--muted)', 
           marginTop: '0.625rem', 

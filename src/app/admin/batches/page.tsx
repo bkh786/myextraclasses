@@ -28,20 +28,32 @@ export default function AdminBatchesPage() {
   const fetchBatches = async () => {
     try {
       setLoading(true);
-      // Fetch batches with teacher names linked
-      let { data, error } = await supabase
-        .from('batches')
-        .select(`*, teachers (name)`)
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-         console.warn("Complex join failed, falling back to basic fetching...", error);
-         const res = await supabase.from('batches').select('*').order('created_at', { ascending: false });
-         if (res.error) throw res.error;
-         data = res.data;
+      // Fetch separately to avoid internal relation bugs
+      const [batchesRes, teachersRes] = await Promise.all([
+        supabase.from('batches').select('*').order('created_at', { ascending: false }),
+        supabase.from('teachers').select('teacher_id, name')
+      ]);
+
+      if (batchesRes.error) throw batchesRes.error;
+
+      // Manually map logic
+      const teachersMap = new Map();
+      if (teachersRes.data) {
+        teachersRes.data.forEach(t => {
+          teachersMap.set(t.teacher_id, t.name);
+        });
       }
 
-      setBatches(data || []);
+      let finalData: any = [];
+      
+      if (batchesRes.data) {
+         finalData = batchesRes.data.map(b => ({
+            ...b,
+            teachers: { name: teachersMap.get(b.teacher_id) || null }
+         }));
+      }
+
+      setBatches(finalData);
     } catch (error) {
       console.error('Error fetching batches:', error);
     } finally {
