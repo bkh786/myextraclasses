@@ -1,21 +1,214 @@
 'use client';
 
-import React from 'react';
-import { BarChart3, TrendingUp, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/context/auth-context';
+import { Loader2, Save, GraduationCap } from 'lucide-react';
 
-export default function TeacherPerformancePage() {
+export default function TeacherPerformanceEntryPage() {
+  const { user } = useAuth();
+  const [batches, setBatches] = useState<any[]>([]);
+  const [assessments, setAssessments] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [scores, setScores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const [selectedBatchId, setSelectedBatchId] = useState('');
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadInitial() {
+      if (!user) return;
+      setLoading(true);
+      const { data: bData } = await supabase.from('batches').select('*').eq('teacher_id', user.id);
+      if (bData) setBatches(bData);
+      setLoading(false);
+    }
+    loadInitial();
+  }, [user]);
+
+  // Load assessments when batch changes
+  useEffect(() => {
+    async function loadAssessments() {
+      if (!selectedBatchId) return;
+      const { data } = await supabase.from('assessments').select('*').eq('batch_id', selectedBatchId);
+      if (data) setAssessments(data);
+      setSelectedAssessmentId(''); // Reset selector
+      setStudents([]);
+    }
+    loadAssessments();
+  }, [selectedBatchId]);
+
+  // Load students & existing scores when assessment changes
+  useEffect(() => {
+    async function loadStudentsAndScores() {
+      if (!selectedAssessmentId || !selectedBatchId) return;
+      setLoading(true);
+      
+      // 1. Fetch Students mapped to batch_students
+      const { data: studentMapping } = await supabase
+        .from('batch_students')
+        .select('*, students(name, student_id)')
+        .eq('batch_id', selectedBatchId);
+        
+      const mappedStudents = studentMapping?.map(m => m.students) || [];
+      setStudents(mappedStudents);
+
+      // 2. Fetch existing scores for this assessment
+      const { data: existingScores } = await supabase
+        .from('assessment_scores')
+        .select('*')
+        .eq('assessment_id', selectedAssessmentId);
+
+      setScores(existingScores || []);
+      setLoading(false);
+    }
+    loadStudentsAndScores();
+  }, [selectedAssessmentId]);
+
+  const handleScoreChange = (studentId: string, value: string, type: 'score' | 'remarks') => {
+    setScores(prev => {
+      const existing = prev.find(s => s.student_id === studentId) || { student_id: studentId, score: '', remarks: '' };
+      const updated = { ...existing, [type]: value };
+      return [...prev.filter(s => s.student_id !== studentId), updated];
+    });
+  };
+
+  const handleSaveGrades = async () => {
+    if (!selectedAssessmentId) return;
+    setIsSaving(true);
+    
+    // Prepare upsert payload
+    const payload = scores.map(s => ({
+      assessment_id: selectedAssessmentId,
+      student_id: s.student_id,
+      score: s.score === '' ? null : Number(s.score),
+      remarks: s.remarks || null
+    }));
+
+    // In a production app with conflicts allowed on unique constraints we'd use upsert. 
+    // Since we don't have unique constraint on (assessment_id, student_id) guaranteed in simple schema, 
+    // we delete old and inset new.
+
+    await supabase.from('assessment_scores').delete().eq('assessment_id', selectedAssessmentId);
+    await supabase.from('assessment_scores').insert(payload);
+
+    alert("Grades successfully published to students!");
+    setIsSaving(false);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Student Performance Tracking</h1>
-        <p style={{ color: 'var(--muted)' }}>Log marks and analyze batch performance metrics.</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Student Performance Entry</h1>
+          <p style={{ color: 'var(--muted)' }}>Record marks derived from your Google Forms assessments against the student roster.</p>
+        </div>
       </div>
 
-      <div className="card" style={{ padding: '3rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: 'var(--muted)' }}>
-        <BarChart3 size={48} color="#cbd5e1" />
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--foreground)' }}>No tests logged recently</h3>
-        <p>Record test scores for your batches to visualize interactive performance charts.</p>
+      <div className="card" style={{ display: 'flex', gap: '1.5rem', padding: '1.5rem', backgroundColor: 'var(--secondary)' }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Select Batch Filter</label>
+          <select 
+            className="input" 
+            value={selectedBatchId}
+            onChange={(e) => setSelectedBatchId(e.target.value)}
+          >
+            <option value="">-- Choose Batch --</option>
+            {batches.map(b => (
+              <option key={b.batch_id} value={b.batch_id}>{b.name}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '0.875rem', fontWeight: '600', display: 'block', marginBottom: '0.5rem' }}>Select Assesment Payload</label>
+          <select 
+            className="input" 
+            value={selectedAssessmentId}
+            onChange={(e) => setSelectedAssessmentId(e.target.value)}
+            disabled={!selectedBatchId}
+          >
+            <option value="">-- Choose Assessment Topic --</option>
+            {assessments.map(a => (
+              <option key={a.id} value={a.id}>{a.title} ({new Date(a.created_at).toLocaleDateString()})</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {loading && selectedAssessmentId ? (
+        <div style={{ padding: '4rem', display: 'flex', justifyContent: 'center' }}>
+          <Loader2 className="animate-spin" size={32} color="var(--primary)" />
+        </div>
+      ) : selectedAssessmentId ? (
+         <div className="card" style={{ padding: '0' }}>
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--card-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ padding: '0.5rem', backgroundColor: '#e0e7ff', color: 'var(--primary)', borderRadius: '8px' }}>
+                  <GraduationCap size={20} />
+                </div>
+                <h2 style={{ fontSize: '1rem', fontWeight: '700' }}>Evaluation Roster</h2>
+              </div>
+              <button onClick={handleSaveGrades} disabled={isSaving} className="btn btn-primary">
+                {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} 
+                Publish Grades
+              </button>
+            </div>
+            
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th style={{ width: '150px' }}>Score / Marks</th>
+                    <th>Analytical Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map(student => {
+                    const activeScoreRow = scores.find(s => s.student_id === student.student_id);
+                    return (
+                      <tr key={student.student_id}>
+                        <td style={{ fontWeight: '600' }}>{student.name}</td>
+                        <td>
+                           <input 
+                              type="number" 
+                              className="input" 
+                              placeholder="e.g. 85"
+                              value={activeScoreRow?.score || ''}
+                              onChange={(e) => handleScoreChange(student.student_id, e.target.value, 'score')}
+                           />
+                        </td>
+                        <td>
+                           <input 
+                              type="text" 
+                              className="input" 
+                              placeholder="Needs improvement bridging equations..."
+                              value={activeScoreRow?.remarks || ''}
+                              onChange={(e) => handleScoreChange(student.student_id, e.target.value, 'remarks')}
+                           />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {students.length === 0 && (
+                    <tr>
+                      <td colSpan={3} style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
+                        No students are dynamically mapped to this batch. Ask the admin to assign students.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+         </div>
+      ) : (
+        <div className="card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--muted)' }}>
+          Please select a Batch and an Assessment above to begin grading.
+        </div>
+      )}
     </div>
   );
 }

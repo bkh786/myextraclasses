@@ -33,6 +33,8 @@ const ADMIN_LINKS = [
   { href: '/admin/teachers', icon: Users, label: 'Teachers' },
   { href: '/admin/batches', icon: BookOpen, label: 'Batches' },
   { href: '/admin/fees', icon: CreditCard, label: 'Fees' },
+  { href: '/admin/confirm-payments', icon: Search, label: 'Confirm Payments' },
+  { href: '/admin/teacher-performance', icon: Star, label: 'Teacher Performance' },
   { href: '/admin/reports', icon: BarChart3, label: 'Reports' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
@@ -41,7 +43,7 @@ const TEACHER_LINKS = [
   { href: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/teacher/batches', icon: BookOpen, label: 'My Classes' },
   { href: '/teacher/attendance', icon: Calendar, label: 'Attendance' },
-  { href: '/teacher/homework', icon: Upload, label: 'Homework' },
+  { href: '/teacher/class-update', icon: Upload, label: 'Class Update' },
   { href: '/teacher/performance', icon: BarChart3, label: 'Student Performance' },
   { href: '/teacher/earnings', icon: CreditCard, label: 'Earnings' },
   { href: '/teacher/profile', icon: User, label: 'Profile' },
@@ -51,7 +53,7 @@ const STUDENT_LINKS = [
   { href: '/student/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/student/classes', icon: BookOpen, label: 'My Classes' },
   { href: '/student/attendance', icon: Calendar, label: 'Attendance' },
-  { href: '/student/homework', icon: ClipboardList, label: 'Homework' },
+  { href: '/student/class-update', icon: ClipboardList, label: 'Class Update' },
   { href: '/student/performance', icon: BarChart3, label: 'Performance' },
   { href: '/student/fees', icon: CreditCard, label: 'Fees' },
   { href: '/student/rating', icon: Star, label: 'Teacher Rating' },
@@ -82,11 +84,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="dashboard-container">
       {/* Sidebar - Desktop & Mobile via classes */}
       <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-            <GraduationCap size={20} />
-          </div>
-          <span style={{ fontWeight: '700', fontSize: '1.25rem' }}>Extra Classes</span>
+        <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img src="/logo.png" alt="Extra Classes Logo" style={{ maxWidth: '180px', maxHeight: '60px', objectFit: 'contain' }} />
           {/* Close button for mobile */}
           <button 
             className="hideDesktop"

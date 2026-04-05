@@ -26,8 +26,8 @@ export default function StudentDashboard() {
       </div>
 
       {/* Clickable KPI Cards */}
-      <div className="grid grid-cols-5 gap-4">
-        <a href="/student/classes" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #3b82f6', textDecoration: 'none', color: 'inherit' }}>
+      <div className="grid grid-cols-4 gap-4">
+        <a href="/student/classes" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #3b82f6', textDecoration: 'none', color: 'inherit', height: '140px', justifyContent: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted)' }}>Active Courses</span>
             <BookOpen size={18} color="#3b82f6" />
@@ -35,7 +35,7 @@ export default function StudentDashboard() {
           <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>3</div>
         </a>
 
-        <a href="/student/attendance" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #10b981', textDecoration: 'none', color: 'inherit' }}>
+        <a href="/student/attendance" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #10b981', textDecoration: 'none', color: 'inherit', height: '140px', justifyContent: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted)' }}>Attendance %</span>
             <Calendar size={18} color="#10b981" />
@@ -43,16 +43,7 @@ export default function StudentDashboard() {
           <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>92%</div>
         </a>
 
-        <a href="/student/classes" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #8b5cf6', textDecoration: 'none', color: 'inherit', gridColumn: 'span 1' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted)' }}>Next Class</span>
-            <Video size={18} color="#8b5cf6" />
-          </div>
-          <div style={{ fontSize: '1rem', fontWeight: '800', color: '#6d28d9' }}>Math (5:00 PM)</div>
-          <button className="btn btn-primary" style={{ padding: '0.25rem', fontSize: '0.75rem', marginTop: 'auto' }}>Join Link</button>
-        </a>
-
-        <a href="/student/performance" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #f59e0b', textDecoration: 'none', color: 'inherit' }}>
+        <a href="/student/performance" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #f59e0b', textDecoration: 'none', color: 'inherit', height: '140px', justifyContent: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted)' }}>Avg Marks</span>
             <Star size={18} color="#f59e0b" />
@@ -60,7 +51,7 @@ export default function StudentDashboard() {
           <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>85%</div>
         </a>
 
-        <a href="/student/fees" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #ef4444', textDecoration: 'none', color: 'inherit' }}>
+        <a href="/student/fees" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', borderTop: '4px solid #ef4444', textDecoration: 'none', color: 'inherit', height: '140px', justifyContent: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted)' }}>Fees Pending</span>
             <CreditCard size={18} color="#ef4444" />

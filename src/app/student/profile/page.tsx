@@ -5,7 +5,7 @@ import { User, Mail, Phone, Save, Loader2, Edit3, X } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { supabase } from '@/lib/supabase-client';
 
-export default function TeacherProfilePage() {
+export default function StudentProfilePage() {
   const { user } = useAuth();
   
   const [isEditing, setIsEditing] = useState(false);
@@ -15,11 +15,11 @@ export default function TeacherProfilePage() {
   useEffect(() => {
     async function loadFullProfile() {
       if (!user) return;
-      const { data } = await supabase.from('teachers').select('phone, email').eq('teacher_id', user.id).single();
-      if (data) {
+      const { data: prof } = await supabase.from('profiles').select('phone, email').eq('id', user.id).single();
+      if (prof) {
         setProfileData({ 
-          phone: data.phone || '', 
-          email: data.email || user.email || '' 
+          phone: prof.phone || '', 
+          email: prof.email || user.email || '' 
         });
       }
     }
@@ -32,7 +32,8 @@ export default function TeacherProfilePage() {
     
     // Updates local custom tables (does not force login auth email swap unless mapped explicitly)
     await supabase.from('profiles').update({ phone: profileData.phone, email: profileData.email }).eq('id', user.id);
-    await supabase.from('teachers').update({ phone: profileData.phone, email: profileData.email }).eq('teacher_id', user.id);
+    // Student Table doesn't explicitly store email/phone independently, it queries from Profiles via ID, but we try anyway just in case:
+    await supabase.from('leads').update({ phone: profileData.phone }).eq('lead_id', user.id).select().limit(1).maybeSingle();
     
     setIsSaving(false);
     setIsEditing(false);
@@ -48,11 +49,11 @@ export default function TeacherProfilePage() {
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold' }}>
-            {user?.name?.charAt(0) || 'T'}
+            {user?.name?.charAt(0) || 'S'}
           </div>
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '700' }}>{user?.name || 'Teacher Profile'}</h2>
-            <p style={{ color: 'var(--muted)' }}>Role: {user?.role || 'TEACHER'}</p>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '700' }}>{user?.name || 'Student Profile'}</h2>
+            <p style={{ color: 'var(--muted)' }}>Role: {user?.role || 'STUDENT'}</p>
           </div>
           <div style={{ marginLeft: 'auto' }}>
             {isEditing ? (

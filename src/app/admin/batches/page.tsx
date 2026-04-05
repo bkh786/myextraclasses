@@ -29,17 +29,18 @@ export default function AdminBatchesPage() {
     try {
       setLoading(true);
       // Fetch batches with teacher names linked
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('batches')
-        .select(`
-          *,
-          teachers (
-            name
-          )
-        `)
+        .select(`*, teachers (name)`)
         .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+        
+      if (error) {
+         console.warn("Complex join failed, falling back to basic fetching...", error);
+         const res = await supabase.from('batches').select('*').order('created_at', { ascending: false });
+         if (res.error) throw res.error;
+         data = res.data;
+      }
+
       setBatches(data || []);
     } catch (error) {
       console.error('Error fetching batches:', error);
