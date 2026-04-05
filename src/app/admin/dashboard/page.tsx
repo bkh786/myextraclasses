@@ -138,6 +138,16 @@ export default function AdminDashboard() {
           <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>Business Overview & Academic Performance Analytics</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <select className="input" style={{ width: '120px', height: '40px' }} defaultValue={new Date().toLocaleString('default', { month: 'long' })}>
+            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <select className="input" style={{ width: '100px', height: '40px' }} defaultValue="2026">
+            {['2024', '2025', '2026', '2027'].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
           <button 
             onClick={() => setModalType('lead')}
             className="btn btn-primary" 
@@ -152,17 +162,15 @@ export default function AdminDashboard() {
       {/* KPI Section */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard title="Total Leads" value={stats?.total_leads} growth={12} icon={UserPlus} color="#6366f1" />
-        <StatCard title="New This Month" value={stats?.new_leads_this_month} icon={Calendar} color="#8b5cf6" />
         <StatCard title="Demo Scheduled" value={stats?.demo_scheduled_count} subValue={`${stats?.demo_completed_count} Completed`} icon={Clock} color="#f59e0b" />
         <StatCard title="Conversion" value={`${stats?.conversion_rate}%`} growth={5} icon={TrendingUp} color="#10b981" />
-
         <StatCard title="Active Students" value={stats?.active_students} subValue={`Total: ${stats?.total_converted_students}`} icon={Users} color="#06b6d4" />
-        <StatCard title="Retention Rate" value={`${stats?.retention_rate}%`} icon={CheckCircle2} color="#10b981" />
+
         <StatCard title="Total Teachers" value={stats?.total_teachers} icon={Briefcase} color="#ec4899" />
         <StatCard title="Active Batches" value={stats?.total_batches} icon={Briefcase} color="#f97316" />
-
         <StatCard title="Monthly Revenue" value={`₹${stats?.monthly_revenue.toLocaleString()}`} growth={18} icon={DollarSign} color="#10b981" />
         <StatCard title="Pending Fees" value={`₹${stats?.total_pending_fees.toLocaleString()}`} icon={AlertCircle} color="#ef4444" />
+
         <StatCard title="Batch Fill Rate" value={`${stats?.batch_fill_rate}%`} icon={PieChartIcon} color="#6366f1" />
         <StatCard title="Payout Liability" value={`₹${stats?.total_teacher_payout_liability.toLocaleString()}`} icon={CreditCard} color="#8b5cf6" />
       </div>

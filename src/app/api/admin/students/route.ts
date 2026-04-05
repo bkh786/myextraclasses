@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(
 export async function GET() {
   try {
     const [studentsRes, profilesRes, feeRes, batchesRes, batchStudentsRes] = await Promise.all([
-      supabaseAdmin.from('students').select('*').order('created_at', { ascending: false }),
+      supabaseAdmin.from('students').select('*').order('join_date', { ascending: false }),
       supabaseAdmin.from('profiles').select('id, email'),
       supabaseAdmin.from('fees').select('*'),
       supabaseAdmin.from('batches').select('batch_id, name'),

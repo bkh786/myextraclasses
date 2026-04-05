@@ -84,114 +84,76 @@ export default function AdminBatchesPage() {
           <Loader2 className="animate-spin" size={32} color="var(--primary)" />
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-6">
-          {batches.length > 0 ? batches.map((batch) => {
-            const studentCount = batch.batch_students?.[0]?.count || 0;
-            const fillRate = (studentCount / (batch.max_students || 20)) * 100;
-            
-            return (
-              <div className="card" key={batch.batch_id} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <h3 style={{ fontWeight: '700', fontSize: '1.125rem' }}>{batch.name}</h3>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>{batch.subject} - {batch.class}</p>
-                  </div>
-                  <span style={{ 
-                    padding: '0.25rem 0.5rem', 
-                    borderRadius: '6px', 
-                    fontSize: '0.75rem',
-                    backgroundColor: '#ecfdf5',
-                    color: '#059669',
-                    fontWeight: '600'
-                  }}>
-                    Active
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                    <Users size={18} color="var(--muted)" />
-                    <span>{studentCount} / {batch.max_students || 20} Students</span>
-                  </div>
-                  <div style={{ padding: '0.25rem 0', width: '100%' }}>
-                    <div style={{ height: '6px', backgroundColor: 'var(--secondary)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ width: `${fillRate}%`, height: '100%', backgroundColor: 'var(--primary)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                    <ShieldCheck size={18} color="var(--muted)" />
-                    <span>Teacher: <strong>{batch.teachers?.name || 'Unassigned'}</strong></span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                    <Clock size={14} color="var(--muted)" />
-                    <span>Timing: {batch.timing || 'TBD'}</span>
-                  </div>
-                  {batch.zoom_link && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.875rem' }}>
-                      <Video size={14} color="#2563eb" />
-                      <a href={batch.zoom_link} target="_blank" style={{ color: '#2563eb', fontWeight: '500' }}>Zoom Class Link</a>
-                    </div>
-                  )}
-                </div>
-
-                <div style={{ 
-                  marginTop: '0.5rem', 
-                  padding: '1rem', 
-                  backgroundColor: 'var(--secondary)', 
-                  borderRadius: '8px',
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '1rem'
-                }}>
-                  <div>
-                    <p style={{ fontSize: '0.625rem', color: 'var(--muted)', textTransform: 'uppercase' }}>Fees/Student</p>
-                    <p style={{ fontWeight: '700' }}>₹{batch.fee_per_student || 0}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.625rem', color: 'var(--muted)', textTransform: 'uppercase' }}>Payout/Batch</p>
-                    <p style={{ fontWeight: '700' }}>₹{batch.teacher_payout || 0}</p>
-                  </div>
-                </div>
-
-                <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }}>
-                  Batch Details
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            );
-          }) : (
-            <div className="card" style={{ gridColumn: 'span 3', textAlign: 'center', padding: '3rem' }}>
-              <AlertCircle size={48} style={{ margin: '0 auto 1rem', color: 'var(--muted)' }} />
-              <p style={{ fontWeight: '600' }}>No active batches found in Supabase.</p>
-              <button className="btn btn-primary" style={{ marginTop: '1rem', marginInline: 'auto' }}>
-                Create Your First Batch
-              </button>
-            </div>
-          )}
-
-          {/* Add Batch Placeholder Card */}
-          {batches.length > 0 && (
-            <div 
-              onClick={() => setIsModalOpen(true)}
-              style={{ 
-                border: '2px dashed var(--card-border)', 
-                borderRadius: 'var(--radius)', 
-                padding: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '1rem',
-                color: 'var(--muted)',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ padding: '1rem', backgroundColor: 'var(--secondary)', borderRadius: '50%' }}>
-                <Plus size={32} />
-              </div>
-              <p style={{ fontWeight: '600' }}>Create New Batch</p>
-            </div>
-          )}
+        <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid var(--card-border)' }}>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Batch Name</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Faculty</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Schedule</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Students</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Financials</th>
+                  <th style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {batches.length > 0 ? batches.map((batch) => {
+                  const studentCount = batch.batch_students?.[0]?.count || 0;
+                  return (
+                    <tr key={batch.batch_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ fontWeight: '700' }}>{batch.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{batch.subject} • {batch.class}</div>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: '500' }}>
+                          <ShieldCheck size={16} color="var(--primary)" />
+                          {batch.teachers?.name || 'Unassigned'}
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                          <Clock size={14} color="var(--muted)" />
+                          {batch.timing || 'TBD'}
+                        </div>
+                        {batch.zoom_link && (
+                          <a href={batch.zoom_link} target="_blank" style={{ fontSize: '0.75rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                            <Video size={12} /> Link
+                          </a>
+                        )}
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>{studentCount} / {batch.max_students || 20}</div>
+                        <div style={{ width: '80px', height: '4px', backgroundColor: '#f1f5f9', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${(studentCount / (batch.max_students || 20)) * 100}%`, height: '100%', backgroundColor: 'var(--primary)' }} />
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem' }}>
+                        <div style={{ fontSize: '0.875rem' }}>F: ₹{batch.fee_per_student}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>P: ₹{batch.teacher_payout}</div>
+                      </td>
+                      <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                        <button 
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                          onClick={() => alert(`Opening Batch Details: ${batch.name}`)}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>
+                      No active batches found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

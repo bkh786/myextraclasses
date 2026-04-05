@@ -63,11 +63,32 @@ export default function AdminLeadsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Converted': return { bg: '#ecfdf5', text: '#059669', icon: CheckCircle2 };
-      case 'New': return { bg: '#eff6ff', text: '#2563eb', icon: Clock };
+      case 'Received': return { bg: '#eff6ff', text: '#2563eb', icon: Clock };
+      case 'Connected': return { bg: '#fdf4ff', text: '#9333ea', icon: Phone };
       case 'Demo Scheduled': return { bg: '#fff7ed', text: '#d97706', icon: Calendar };
-      case 'Demo Completed': return { bg: '#fdf4ff', text: '#9333ea', icon: CheckCircle2 };
       case 'Lost': return { bg: '#fef2f2', text: '#dc2626', icon: XCircle };
       default: return { bg: '#f1f5f9', text: '#64748b', icon: Clock };
+    }
+  };
+
+  const handleStatusUpdate = async (leadId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ status: newStatus })
+        .eq('id', leadId);
+      
+      if (error) throw error;
+      
+      if (newStatus === 'Converted') {
+        const lead = leads.find(l => l.id === leadId);
+        if (lead) setConversionLead(lead);
+      }
+      
+      fetchLeads();
+    } catch (err: any) {
+      console.error('Error updating status:', err);
+      alert('Failed to update status');
     }
   };
 
@@ -162,7 +183,7 @@ export default function AdminLeadsPage() {
             </thead>
             <tbody>
               {filteredLeads.length > 0 ? filteredLeads.map((lead) => {
-                const status = getStatusColor(lead.conversion_status);
+                const status = getStatusColor(lead.status || 'Received');
                 const StatusIcon = status.icon;
                 return (
                   <tr key={lead.id}>
@@ -182,20 +203,27 @@ export default function AdminLeadsPage() {
                       <div style={{ fontSize: '0.875rem' }}>{lead.class} - {lead.subjects}</div>
                     </td>
                     <td>
-                      <div style={{ 
-                        display: 'inline-flex', 
-                        alignItems: 'center', 
-                        gap: '0.375rem',
-                        padding: '0.375rem 0.75rem', 
-                        borderRadius: '20px', 
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        backgroundColor: status.bg,
-                        color: status.text,
-                      }}>
-                        <StatusIcon size={14} />
-                        {lead.conversion_status}
-                      </div>
+                      <select 
+                        value={lead.status || 'Received'} 
+                        onChange={(e) => handleStatusUpdate(lead.id, e.target.value)}
+                        style={{ 
+                          padding: '0.375rem 0.75rem', 
+                          borderRadius: '20px', 
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          backgroundColor: status.bg,
+                          color: status.text,
+                          border: 'none',
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="Received">Received</option>
+                        <option value="Connected">Connected</option>
+                        <option value="Demo Scheduled">Demo Scheduled</option>
+                        <option value="Converted">Converted</option>
+                        <option value="Lost">Lost</option>
+                      </select>
                     </td>
                     <td style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>
                       {new Date(lead.created_at).toLocaleDateString()}
@@ -205,7 +233,7 @@ export default function AdminLeadsPage() {
                         <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
                           <Mail size={16} />
                         </button>
-                        {lead.conversion_status !== 'Converted' ? (
+                        {lead.status !== 'Converted' ? (
                           <button 
                             onClick={() => setConversionLead(lead)}
                             className="btn btn-primary" 

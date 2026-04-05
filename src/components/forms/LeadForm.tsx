@@ -28,7 +28,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
     parent_name: '',
     class: '',
     source: 'Website',
-    conversion_status: 'New'
+    status: 'Received'
   });
 
   // Watch class changes to update subjects
@@ -90,7 +90,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
             class: formData.class,
             subjects: selectedSubjects.join(', '),
             source: formData.source,
-            conversion_status: formData.conversion_status
+            status: formData.status
           }
         ]);
 
