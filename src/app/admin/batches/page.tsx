@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Plus, 
   Users, 
@@ -21,6 +22,7 @@ import ActionModal from '@/components/common/ActionModal';
 import BatchForm from '@/components/forms/BatchForm';
 
 export default function AdminBatchesPage() {
+  const router = useRouter();
   const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -137,7 +139,7 @@ export default function AdminBatchesPage() {
                         <button 
                           className="btn btn-secondary" 
                           style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
-                          onClick={() => alert(`Opening Batch Details: ${batch.name}`)}
+                          onClick={() => router.push(`/admin/batches/${batch.batch_id}`)}
                         >
                           View Details
                         </button>
