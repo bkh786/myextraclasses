@@ -25,6 +25,7 @@ export default function StudentDetailPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [fees, setFees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadStudentData() {
@@ -67,9 +68,25 @@ export default function StudentDetailPage() {
 
       setLoading(false);
     }
-
     loadStudentData();
   }, [id]);
+
+  const handleMarkPaid = async (feeId: string) => {
+    setActionLoading(feeId);
+    const { error } = await supabase
+      .from('fees')
+      .update({ 
+        paid: true, 
+        payment_date: new Date().toISOString().split('T')[0],
+        payment_mode: 'Cash/Manual'
+      })
+      .eq('fee_id', feeId);
+
+    if (!error) {
+       setFees(prev => prev.map(f => f.fee_id === feeId ? { ...f, paid: true, payment_mode: 'Manual', payment_date: new Date() } : f));
+    }
+    setActionLoading(null);
+  };
 
   if (loading) {
     return (
@@ -202,7 +219,18 @@ export default function StudentDetailPage() {
                           )}
                         </td>
                         <td style={{ fontSize: '0.8125rem', color: 'var(--muted)' }}>
-                           {fee.paid ? `${fee.payment_mode || 'Online'} on ${new Date(fee.payment_date).toLocaleDateString()}` : 'Payment Pending'}
+                           {fee.paid ? (
+                             `${fee.payment_mode || 'Online'} on ${new Date(fee.payment_date).toLocaleDateString()}`
+                           ) : (
+                             <button 
+                               onClick={() => handleMarkPaid(fee.fee_id)} 
+                               disabled={!!actionLoading}
+                               className="btn btn-primary" 
+                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                             >
+                               {actionLoading === fee.fee_id ? 'Updating...' : 'Mark as Paid'}
+                             </button>
+                           )}
                         </td>
                       </tr>
                     ))}

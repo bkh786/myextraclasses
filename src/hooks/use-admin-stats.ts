@@ -20,19 +20,23 @@ export interface AdminStats {
   batch_fill_rate: number;
 }
 
-export function useAdminStats() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
+export function useAdminStats(month?: number, year?: number) {
+  const [stats, setStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
-      // Fetch from the view
-      const { data, error } = await supabase
-        .from('view_admin_dashboard_stats')
-        .select('*')
-        .single();
+      
+      const currentMonth = month || new Date().getMonth() + 1;
+      const currentYear = year || new Date().getFullYear();
+
+      // Call the RPC for dynamic filtering
+      const { data, error } = await supabase.rpc('get_admin_dashboard_stats', {
+        p_month: currentMonth,
+        p_year: currentYear
+      });
 
       if (error) throw error;
       setStats(data);
@@ -65,7 +69,7 @@ export function useAdminStats() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [month, year]);
 
   return { stats, loading, error, refresh: fetchStats };
 }

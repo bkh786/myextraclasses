@@ -74,7 +74,10 @@ const StatCard = ({ title, value, subValue, growth, icon: Icon, color }: any) =>
 );
 
 export default function AdminDashboard() {
-  const { stats, loading: statsLoading, refresh } = useAdminStats();
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  const { stats, loading: statsLoading, refresh } = useAdminStats(selectedMonth, selectedYear);
   const { trends, loading: trendsLoading } = useRevenueTrends();
 
   // Modal State
@@ -138,14 +141,24 @@ export default function AdminDashboard() {
           <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>Business Overview & Academic Performance Analytics</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <select className="input" style={{ width: '120px', height: '40px' }} defaultValue={new Date().toLocaleString('default', { month: 'long' })}>
-            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
-              <option key={m} value={m}>{m}</option>
+          <select 
+            className="input" 
+            style={{ width: '120px', height: '40px' }} 
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+          >
+            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, idx) => (
+              <option key={m} value={idx + 1}>{m}</option>
             ))}
           </select>
-          <select className="input" style={{ width: '100px', height: '40px' }} defaultValue="2026">
+          <select 
+            className="input" 
+            style={{ width: '100px', height: '40px' }} 
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          >
             {['2024', '2025', '2026', '2027'].map(y => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={parseInt(y)}>{y}</option>
             ))}
           </select>
           <button 

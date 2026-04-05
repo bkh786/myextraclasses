@@ -24,6 +24,7 @@ export default function TeacherDetailPage() {
   const [teacher, setTeacher] = useState<any>(null);
   const [batches, setBatches] = useState<any[]>([]);
   const [ratings, setRatings] = useState<any[]>([]);
+  const [attendance, setAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,6 +59,15 @@ export default function TeacherDetailPage() {
         .select('*, students(name)')
         .eq('teacher_id', id);
       setRatings(rData || []);
+
+      // 4. Fetch Attendance (Last 30 records)
+      const { data: aData } = await supabase
+        .from('teacher_attendance')
+        .select('*')
+        .eq('teacher_id', id)
+        .order('date', { ascending: false })
+        .limit(30);
+      setAttendance(aData || []);
 
       setLoading(false);
     }
@@ -160,6 +170,45 @@ export default function TeacherDetailPage() {
                     {batches.length === 0 && (
                       <tr>
                         <td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>No batches assigned to this instructor.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+           </div>
+
+           <div className="card" style={{ padding: '0', overflow: 'hidden', marginTop: '1.5rem' }}>
+              <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--card-border)', backgroundColor: '#fdf2f2' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#991b1b' }}>
+                  <Users size={20} /> Daily Attendance History
+                </h2>
+              </div>
+              <div className="table-container" style={{ border: 'none' }}>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Time Recorded</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendance.map((entry, idx) => (
+                      <tr key={idx}>
+                        <td style={{ fontWeight: '600' }}>{new Date(entry.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}</td>
+                        <td>
+                          <span className="badge" style={{ backgroundColor: '#ecfdf5', color: '#047857' }}>
+                            {entry.status}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                          {new Date(entry.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                      </tr>
+                    ))}
+                    {attendance.length === 0 && (
+                      <tr>
+                        <td colSpan={3} style={{ textAlign: 'center', padding: '3rem', color: 'var(--muted)' }}>No attendance records found for this instructor.</td>
                       </tr>
                     )}
                   </tbody>

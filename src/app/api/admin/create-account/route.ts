@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Create Supabase Auth User
-    const defaultPassword = 'extraclasses@1234';
+    const defaultPassword = 'Extraclasses@1234';
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: defaultPassword,
