@@ -25,12 +25,10 @@ export default function StudentsPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('students')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const res = await fetch('/api/admin/students');
+      const data = await res.json();
       
-      if (error) throw error;
+      if (!res.ok) throw new Error(data.error);
       setStudents(data || []);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -77,7 +75,7 @@ export default function StudentsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Enroll New Student"
-        description="Register a new student and link them to their parent/guardian."
+        description="Register a new student and assign them immediately to a batch."
       >
         <StudentForm 
           onSuccess={() => {
@@ -117,9 +115,9 @@ export default function StudentsPage() {
               <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid var(--card-border)' }}>
                 <tr>
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Student</th>
-                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Class / Course</th>
-                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Parent Contact</th>
-                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Enrolled Batch</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Onboarding Date</th>
+                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Pending Fees</th>
                   <th style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Action</th>
                 </tr>
               </thead>
@@ -138,24 +136,27 @@ export default function StudentsPage() {
                       </div>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
-                      <div style={{ fontWeight: '500' }}>{student.class}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{student.subjects}</div>
+                      <div style={{ fontWeight: '500' }}>{student.mapped_batch}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Class: {student.class}</div>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
-                      <div style={{ fontWeight: '500' }}>{student.mode || 'Offline'}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>₹{student.monthly_fee || 'N/A'} / month</div>
+                      <div style={{ fontWeight: '500' }}>{student.join_date || 'N/A'}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{student.mode || 'Offline'}</div>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
-                      <span className="badge" style={{ 
-                        backgroundColor: student.status === 'Active' ? '#ecfdf5' : '#fef2f2', 
-                        color: student.status === 'Active' ? '#047857' : '#991b1b' 
-                      }}>
-                        {student.status || 'Active'}
-                      </span>
+                      {student.pending_fees > 0 ? (
+                        <span className="badge" style={{ backgroundColor: '#fef2f2', color: '#991b1b' }}>
+                          ₹{student.pending_fees} Due
+                        </span>
+                      ) : (
+                        <span className="badge" style={{ backgroundColor: '#ecfdf5', color: '#047857' }}>
+                          Paid Up
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                       <button className="btn" style={{ padding: '0.25rem', borderRadius: '4px' }}>
-                        <MoreVertical size={18} color="var(--muted)" />
+                         <MoreVertical size={18} color="var(--muted)" />
                       </button>
                     </td>
                   </tr>

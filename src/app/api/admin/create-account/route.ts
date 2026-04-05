@@ -58,20 +58,23 @@ export async function POST(req: Request) {
 
     // 3. Write data to relevant role-based tables
     if (role.toUpperCase() === 'TEACHER') {
-      await supabaseAdmin.from('teachers').insert([
+      const { error: teacherError } = await supabaseAdmin.from('teachers').insert([
         { teacher_id: userId, name, email, phone: details?.phone || '', status: 'Active' }
       ]);
+      if (teacherError) throw new Error(`Teacher insert failed: ${teacherError.message}`);
     } else if (role.toUpperCase() === 'STUDENT') {
-      await supabaseAdmin.from('students').insert([
+      const { error: studentError } = await supabaseAdmin.from('students').insert([
         { 
           student_id: userId, 
           name, 
-          grade: details?.class || '', 
-          email,
-          phone: details?.phone || '',
-          enrollment_date: details?.enrollment_date || new Date().toISOString()
+          class: details?.class || '', 
+          subjects: details?.subjects || 'All Subjects',
+          join_date: details?.join_date || new Date().toISOString().split('T')[0],
+          status: 'Active',
+          monthly_fee: details?.fees || 0
         }
       ]);
+      if (studentError) throw new Error(`Student insert failed: ${studentError.message}`);
       
       // Assign to Batch if provided
       if (details?.batchId) {
@@ -85,7 +88,7 @@ export async function POST(req: Request) {
     try {
       if (process.env.RESEND_API_KEY) {
         await resend.emails.send({
-          from: 'Extra Classes <hello@extraclasses.app>',
+          from: process.env.RESEND_FROM_EMAIL || 'Extra Classes <onboarding@resend.dev>',
           to: [email],
           subject: 'Welcome to Extra Classes - Your Portal Access',
           html: `
