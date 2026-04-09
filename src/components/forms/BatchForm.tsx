@@ -7,13 +7,16 @@ import { Loader2, CheckCircle, AlertCircle, Calendar, Clock } from 'lucide-react
 interface BatchFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any; // To support edit mode
 }
 
-export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
+export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFormProps) {
   const [loading, setLoading] = useState(false);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const isEdit = !!initialData;
 
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -23,16 +26,48 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
     subject: '',
     teacher_id: '',
     max_students: 5,
-    fee_per_student: '',
     teacher_payout: '',
     start_date: new Date().toISOString().split('T')[0],
     zoom_link: '',
     days: 'Mon-Wed-Fri'
   });
 
+  // Pre-populate if in edit mode
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        class: initialData.class || '',
+        subject: initialData.subject || '',
+        teacher_id: initialData.teacher_id || '',
+        max_students: initialData.max_students || 5,
+        teacher_payout: initialData.teacher_payout || '',
+        start_date: initialData.start_date || new Date().toISOString().split('T')[0],
+        zoom_link: initialData.zoom_link || '',
+        days: initialData.timing?.split(', ')[0] || 'Mon-Wed-Fri'
+      });
+      
+      // Parse timing: "Mon-Wed-Fri, 6:00 PM - 7:30 PM"
+      if (initialData.timing && initialData.timing.includes(', ')) {
+         const timePart = initialData.timing.split(', ')[1];
+         if (timePart.includes(' - ')) {
+            const startStr = timePart.split(' - ')[0];
+            // Format startStr from "6:00 PM" to "18:00" for input type="time"
+            const parseTo24 = (time12: string) => {
+               const [time, modifier] = time12.split(' ');
+               let [hours, minutes] = time.split(':');
+               if (hours === '12') hours = '00';
+               if (modifier === 'PM') hours = String(parseInt(hours) + 12);
+               return `${hours.padStart(2, '0')}:${minutes}`;
+            };
+            try { setStartTime(parseTo24(startStr)); } catch(e) {}
+         }
+      }
+    }
+  }, [initialData]);
+
   useEffect(() => {
     async function fetchTeachers() {
-      const { data } = await supabase.from('teachers').select('*');
+      const { data } = await supabase.from('teachers').select('*').eq('working_status', 'Active');
       if (data) setTeachers(data);
     }
     fetchTeachers();
@@ -50,18 +85,13 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
       minutes = minutes % 60;
       hours = hours % 24;
 
-      const formattedHours = hours.toString().padStart(2, '0');
-      const formattedMinutes = minutes.toString().padStart(2, '0');
-      
       const formatTime12Hour = (h: number, m: number) => {
         const ampm = h >= 12 ? 'PM' : 'AM';
         const displayH = h % 12 || 12;
         return `${displayH}:${m.toString().padStart(2, '0')} ${ampm}`;
       };
 
-      const start12 = formatTime12Hour(parseInt(hoursStr), parseInt(minutesStr));
       const end12 = formatTime12Hour(hours, minutes);
-
       setEndTime(end12);
     } else {
       setEndTime('');
@@ -101,6 +131,8 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
     try {
       const selectedTeacher = teachers.find(t => (t.teacher_id || t.id) === formData.teacher_id);
       const tName = selectedTeacher ? selectedTeacher.name.split(' ')[0] : 'Open';
+      
+      // Auto-rename batch name only on creation or if teacher changes (per user logic previously, but here let's stick to user request)
       const autoBatchName = `${tName} | ${start12}`;
 
       const payload: any = {
@@ -113,12 +145,15 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
       };
 
       if (formData.teacher_id) payload.teacher_id = formData.teacher_id;
-      if (formData.fee_per_student) payload.fee_per_student = parseFloat(formData.fee_per_student);
+      else payload.teacher_id = null;
+      
       if (formData.teacher_payout) payload.teacher_payout = parseFloat(formData.teacher_payout);
       if (formData.zoom_link) payload.zoom_link = formData.zoom_link;
 
+      if (isEdit) payload.batch_id = initialData.batch_id;
+
       const res = await fetch('/api/admin/batches', {
-        method: 'POST',
+        method: isEdit ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -130,8 +165,8 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
         onSuccess();
       }, 1500);
     } catch (err: any) {
-      console.error('Error creating batch:', err);
-      setError(err.message || 'Failed to create batch. Please check entry.');
+      console.error('Error handling batch:', err);
+      setError(err.message || 'Failed to process batch update/creation.');
     } finally {
       setLoading(false);
     }
@@ -153,14 +188,22 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
         }}>
           <CheckCircle size={32} />
         </div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>Batch Created!</h3>
-        <p style={{ color: '#64748b' }}>Your new batch is now explicitly mapped to the system.</p>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', marginBottom: '0.5rem' }}>
+          Batch {isEdit ? 'Updated' : 'Created'}!
+        </h3>
+        <p style={{ color: '#64748b' }}>
+          {isEdit ? 'Changes have been saved to the faculty ledger.' : 'Your new batch is now explicitly mapped to the system.'}
+        </p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--primary)', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.75rem', marginBottom: '0.5rem' }}>
+        {isEdit ? 'Update Batch Details' : 'Initial Batch Configuration'}
+      </h3>
+      
       {error && (
         <div style={{ padding: '0.75rem 1rem', backgroundColor: '#fef2f2', color: '#ef4444', border: '1px solid #fee2e2', borderRadius: '8px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <AlertCircle size={16} />
@@ -171,7 +214,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Class *</label>
-          <select name="class" required className="input" style={{ width: '100%' }} value={formData.class} onChange={handleChange}>
+          <select name="class" required className="input" style={{ width: '100%' }} value={formData.class} onChange={handleChange} disabled={isEdit}>
              <option value="" disabled>Select Class</option>
              {['Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8'].map(c => (
                <option key={c} value={c}>{c}</option>
@@ -180,7 +223,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Subject *</label>
-          <select name="subject" required className="input" style={{ width: '100%' }} value={formData.subject} onChange={handleChange}>
+          <select name="subject" required className="input" style={{ width: '100%' }} value={formData.subject} onChange={handleChange} disabled={isEdit}>
              <option value="" disabled>Select Subject</option>
              {['All Subjects', 'English', 'Hindi', 'Maths', 'SST', 'Science'].map(s => (
                <option key={s} value={s}>{s}</option>
@@ -200,7 +243,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Days</label>
           <div style={{ position: 'relative' }}>
             <Calendar size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input type="text" name="days" required placeholder="e.g. Mon-Wed-Fri" className="input" style={{ paddingLeft: '2.5rem' }} value={formData.days} onChange={handleChange} />
+            <input type="text" name="days" required placeholder="e.g. Mon-Wed-Fri" className="input" style={{ paddingLeft: '2.5rem' }} value={formData.days} onChange={handleChange} disabled={isEdit} />
           </div>
         </div>
 
@@ -215,6 +258,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
               style={{ paddingLeft: '2.5rem' }} 
               value={startTime} 
               onChange={(e) => setStartTime(e.target.value)} 
+              disabled={isEdit}
             />
           </div>
         </div>
@@ -235,7 +279,7 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
 
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Start Date *</label>
-          <input type="date" name="start_date" required className="input" value={formData.start_date} onChange={handleChange} />
+          <input type="date" name="start_date" required className="input" value={formData.start_date} onChange={handleChange} disabled={isEdit} />
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Max Students</label>
@@ -250,10 +294,6 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Fee per Student (₹)</label>
-          <input type="number" name="fee_per_student" className="input" placeholder="e.g. 3000" value={formData.fee_per_student} onChange={handleChange} />
-        </div>
-        <div>
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Teacher Payout (₹)</label>
           <input type="number" name="teacher_payout" className="input" placeholder="e.g. 5000" value={formData.teacher_payout} onChange={handleChange} />
         </div>
@@ -263,12 +303,12 @@ export default function BatchForm({ onSuccess, onCancel }: BatchFormProps) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', borderTop: '1px solid #f1f5f9', paddingTop: '1.25rem' }}>
         <button type="button" onClick={onCancel} className="btn btn-secondary" style={{ flex: 1 }} disabled={loading}>
-          Cancel
+          {isEdit ? 'Discard' : 'Cancel'}
         </button>
         <button type="submit" className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} disabled={loading}>
-          {loading ? <Loader2 size={18} className="animate-spin" /> : 'Launch Batch'}
+          {loading ? <Loader2 size={18} className="animate-spin" /> : (isEdit ? 'Save Changes' : 'Launch Batch')}
         </button>
       </div>
     </form>

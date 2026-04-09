@@ -59,8 +59,8 @@ export default function TeachersPage() {
       
       if (error) throw error;
 
-      if (newStatus === 'Inactive') {
-        await handleUnassignTeacherFromBatches(actualId);
+      if (newStatus === 'Inactive' && teacher.teacher_id) {
+        await handleUnassignTeacherFromBatches(teacher.teacher_id);
       } else {
         fetchTeachers();
       }

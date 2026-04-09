@@ -125,11 +125,15 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
               style={{ paddingLeft: '2.5rem', appearance: 'none' }}
             >
               <option value="" disabled>Select a Batch</option>
-              {batches.map(b => (
-                <option key={b.batch_id} value={b.batch_id}>
-                  {b.name} ({b.teachers?.name || 'No Teacher'}) - ₹{b.monthly_fee}/mo
-                </option>
-              ))}
+              {batches.map(b => {
+                const studentCount = b.batch_students?.[0]?.count || 0;
+                const isFull = studentCount >= (b.max_students || 5);
+                return (
+                  <option key={b.batch_id} value={b.batch_id} disabled={isFull}>
+                    {b.name} ({b.teachers?.name || 'No Teacher'}) {isFull ? '[FULL - No bandwidth]' : ''}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>

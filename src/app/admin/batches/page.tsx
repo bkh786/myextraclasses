@@ -26,6 +26,7 @@ export default function AdminBatchesPage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState<any>(null);
 
   const fetchBatches = async () => {
     try {
@@ -44,6 +45,16 @@ export default function AdminBatchesPage() {
   useEffect(() => {
     fetchBatches();
   }, []);
+
+  const handleEdit = (batch: any) => {
+    setSelectedBatch(batch);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedBatch(null);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -68,16 +79,17 @@ export default function AdminBatchesPage() {
 
       <ActionModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Create New Batch"
-        description="Schedule a new batch and assign a faculty member."
+        onClose={handleCloseModal}
+        title={selectedBatch ? "Update Batch Details" : "Create New Batch"}
+        description={selectedBatch ? "Modify faculty assignment, payouts, or meeting links." : "Schedule a new batch and assign a faculty member."}
       >
         <BatchForm 
+          initialData={selectedBatch}
           onSuccess={() => {
-            setIsModalOpen(false);
+            handleCloseModal();
             fetchBatches();
           }}
-          onCancel={() => setIsModalOpen(false)}
+          onCancel={handleCloseModal}
         />
       </ActionModal>
 
@@ -102,10 +114,19 @@ export default function AdminBatchesPage() {
               <tbody>
                 {batches.length > 0 ? batches.map((batch) => {
                   const studentCount = batch.batch_students?.[0]?.count || 0;
+                  const isFull = studentCount >= (batch.max_students || 5);
+                  
                   return (
-                    <tr key={batch.batch_id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={batch.batch_id} style={{ 
+                      borderBottom: '1px solid #f1f5f9',
+                      backgroundColor: isFull ? '#f8fafc' : 'transparent',
+                      opacity: isFull ? 0.9 : 1
+                    }}>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <div style={{ fontWeight: '700' }}>{batch.name}</div>
+                        <div style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {batch.name}
+                          {isFull && <span style={{ fontSize: '0.65rem', backgroundColor: '#fee2e2', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: '700' }}>FULL</span>}
+                        </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{batch.subject} • {batch.class}</div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
@@ -126,23 +147,31 @@ export default function AdminBatchesPage() {
                         )}
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>{studentCount} / {batch.max_students || 20}</div>
+                        <div style={{ fontSize: '0.875rem', fontWeight: '600', color: isFull ? '#ef4444' : 'inherit' }}>{studentCount} / {batch.max_students || 5}</div>
                         <div style={{ width: '80px', height: '4px', backgroundColor: '#f1f5f9', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-                          <div style={{ width: `${(studentCount / (batch.max_students || 20)) * 100}%`, height: '100%', backgroundColor: 'var(--primary)' }} />
+                          <div style={{ width: `${(studentCount / (batch.max_students || 5)) * 100}%`, height: '100%', backgroundColor: isFull ? '#ef4444' : 'var(--primary)' }} />
                         </div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem' }}>
-                        <div style={{ fontSize: '0.875rem' }}>F: ₹{batch.fee_per_student}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>P: ₹{batch.teacher_payout}</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Payout: ₹{batch.teacher_payout}</div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
-                          onClick={() => router.push(`/admin/batches/${batch.batch_id}`)}
-                        >
-                          View Details
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                            onClick={() => router.push(`/admin/batches/${batch.batch_id}`)}
+                          >
+                            View
+                          </button>
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', backgroundColor: 'var(--primary)' }}
+                            onClick={() => handleEdit(batch)}
+                          >
+                            Edit
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

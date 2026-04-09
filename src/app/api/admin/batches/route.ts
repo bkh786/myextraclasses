@@ -67,3 +67,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+export async function PATCH(req: Request) {
+  try {
+    const payload = await req.json();
+    const { batch_id, ...updates } = payload;
+    
+    if (!batch_id) {
+       return NextResponse.json({ error: 'Batch ID is required for updates' }, { status: 400 });
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('batches')
+      .update(updates)
+      .eq('batch_id', batch_id);
+
+    if (updateError) throw updateError;
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
