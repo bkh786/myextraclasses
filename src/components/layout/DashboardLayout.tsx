@@ -85,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar - Desktop & Mobile via classes */}
       <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img src="/logo.png" alt="Extra Classes Logo" style={{ maxWidth: '180px', maxHeight: '60px', objectFit: 'contain' }} />
+          <img src="/Special5-logo.png" alt="Special5 - Online Tuitions Logo" style={{ maxWidth: '180px', maxHeight: '60px', objectFit: 'contain' }} />
           {/* Close button for mobile */}
           <button 
             className="hideDesktop"

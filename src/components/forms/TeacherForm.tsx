@@ -22,7 +22,8 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
     classes: '',
     experience: '',
     salary_per_batch: '',
-    status: 'Active'
+    working_status: 'Active',
+    hiring_status: 'applied'
   });
 
   const [countryCode, setCountryCode] = useState('+91');
@@ -39,31 +40,56 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
     setError(null);
 
     try {
-      const res = await fetch('/api/admin/create-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          name: formData.name,
-          role: 'TEACHER',
-          details: {
-            phone: `${countryCode}${phoneNumber}`
-          }
-        })
-      });
+      let teacherUuid = null;
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create teacher account');
+      if (formData.hiring_status === 'hired') {
+        const res = await fetch('/api/admin/create-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            name: formData.name,
+            role: 'TEACHER',
+            details: {
+              phone: `${countryCode}${phoneNumber}`
+            }
+          })
+        });
 
-      // Additional fields not covered by basic trigger
-      if (formData.subjects || formData.classes || formData.experience || formData.salary_per_batch) {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create teacher account');
+        teacherUuid = data.user.id;
+      } else {
+        // Just insert as a lead/applied teacher without Auth account
+        const { data: insertData, error: insertError } = await supabase
+          .from('teachers')
+          .insert([{
+            name: formData.name,
+            email: formData.email,
+            phone: `${countryCode}${phoneNumber}`,
+            subjects: formData.subjects,
+            classes: formData.classes,
+            experience: formData.experience,
+            salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
+            working_status: formData.working_status,
+            hiring_status: formData.hiring_status
+          }])
+          .select()
+          .single();
+        
+        if (insertError) throw insertError;
+      }
+
+      // If hired, we might need to update the additional fields (though the API does some, let's ensure all are set)
+      if (formData.hiring_status === 'hired' && teacherUuid) {
         await supabase.from('teachers').update({
           subjects: formData.subjects,
           classes: formData.classes,
           experience: formData.experience,
           salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
-          status: formData.status
-        }).eq('teacher_id', data.user.id);
+          working_status: formData.working_status,
+          hiring_status: 'hired'
+        }).eq('teacher_id', teacherUuid);
       }
 
       setSuccess(true);
@@ -174,8 +200,16 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
             <input type="number" name="salary_per_batch" className="input" placeholder="e.g. 5000" value={formData.salary_per_batch} onChange={handleChange} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Status</label>
-            <select name="status" className="input" style={{ width: '100%' }} value={formData.status} onChange={handleChange}>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Hiring Status</label>
+            <select name="hiring_status" className="input" style={{ width: '100%' }} value={formData.hiring_status} onChange={handleChange}>
+              <option value="applied">Applied</option>
+              <option value="hired">Hired (Create Account)</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Working Status</label>
+            <select name="working_status" className="input" style={{ width: '100%' }} value={formData.working_status} onChange={handleChange}>
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>

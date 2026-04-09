@@ -71,7 +71,7 @@ export default function StudentFeesPage() {
 
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontWeight: '700', fontSize: '1.125rem' }}>Amount: ₹{activeFee?.amount}</p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>UPI ID: admin.extraclasses@upi</p>
+            <p style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>UPI ID: admin.special5@upi</p>
           </div>
 
           <form onSubmit={handleSubmitUtr} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>

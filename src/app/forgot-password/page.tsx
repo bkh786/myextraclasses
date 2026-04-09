@@ -119,7 +119,7 @@ export default function ForgotPasswordPage() {
                   type="email" 
                   required 
                   className="input" 
-                  placeholder="you@extraclasses.com"
+                  placeholder="you@special5.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ paddingLeft: '2.75rem' }} 

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Create Supabase Auth User
-    const defaultPassword = 'Extraclasses@1234';
+    const defaultPassword = role.toUpperCase() === 'TEACHER' ? 'teacher@special5' : 'Special5@1234';
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: defaultPassword,
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     // 3. Write data to relevant role-based tables
     if (role.toUpperCase() === 'TEACHER') {
       const { error: teacherError } = await supabaseAdmin.from('teachers').insert([
-        { teacher_id: userId, name, email, phone: details?.phone || '', status: 'Active' }
+        { teacher_id: userId, name, email, phone: details?.phone || '', working_status: 'Active', hiring_status: 'hired' }
       ]);
       if (teacherError) throw new Error(`Teacher insert failed: ${teacherError.message}`);
     } else if (role.toUpperCase() === 'STUDENT') {
@@ -88,15 +88,15 @@ export async function POST(req: Request) {
     try {
       if (process.env.RESEND_API_KEY) {
         await resend.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || 'Extra Classes <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM_EMAIL || 'Special5 - Online Tuitions <onboarding@resend.dev>',
           to: [email],
-          subject: 'Welcome to Extra Classes - Your Portal Access',
+          subject: 'Welcome to Special5 - Online Tuitions - Your Portal Access',
           html: `
             <h2>Welcome, ${name}!</h2>
             <p>Your account has been successfully created. You can now log in to access your dashboard.</p>
             <h3>Your Login Credentials:</h3>
             <ul>
-              <li><strong>Portal URL:</strong> <a href="https://extraclasses-crm.vercel.app/login">Login Here</a></li>
+              <li><strong>Portal URL:</strong> <a href="https://special5-crm.vercel.app/login">Login Here</a></li>
               <li><strong>Email/Username:</strong> ${email}</li>
               <li><strong>Password:</strong> ${defaultPassword}</li>
             </ul>

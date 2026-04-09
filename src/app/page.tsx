@@ -33,7 +33,7 @@ export default function Home() {
       <div style={{ textAlign: 'center' }}>
         <Loader2 className="animate-spin" size={32} color="var(--primary)" />
         <h2 style={{ fontWeight: '600', color: 'var(--muted)', marginTop: '1rem' }}>
-          Redirecting to Extra Classes Portal...
+          Redirecting to Special5 - Online Tuitions Portal...
         </h2>
       </div>
     </div>

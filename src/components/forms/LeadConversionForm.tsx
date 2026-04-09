@@ -45,7 +45,7 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: lead.email || `${lead.student_name.replace(/\s+/g, '').toLowerCase()}${Math.floor(Math.random() * 1000)}@student.com`, // Fallback for dummy leads without emails
+          email: lead.email_id || `${lead.student_name.replace(/\s+/g, '').toLowerCase()}${Math.floor(Math.random() * 1000)}@student.com`, // Fallback for dummy leads without emails
           name: lead.student_name,
           role: 'STUDENT',
           details: {
@@ -174,7 +174,7 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
         </p>
         <ul style={{ fontSize: '0.75rem', color: '#1e3a8a', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           <li>✔ A secure login account will be created as a <strong>STUDENT</strong>.</li>
-          <li>✔ The default password <code>Extraclasses@1234</code> will be assigned.</li>
+          <li>✔ The default password <code>Special5@1234</code> will be assigned.</li>
           <li>✔ An onboarding email will dispatch to {lead.email || 'the provided address'}.</li>
           <li>✔ The Lead will map sequentially into the Students & Batches tables.</li>
         </ul>

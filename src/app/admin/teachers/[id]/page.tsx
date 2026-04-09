@@ -132,9 +132,14 @@ export default function TeacherDetailPage() {
           <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>₹{teacher.salary_per_batch?.toLocaleString()}</div>
         </div>
         <div className="card" style={{ borderLeft: '4px solid #8b5cf6' }}>
-          <div style={{ fontSize: '0.875rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Status</div>
-          <div style={{ fontSize: '1.125rem', fontWeight: '600', color: teacher.status === 'Active' ? '#059669' : '#dc2626' }}>
-            {teacher.status || 'Active'}
+          <div style={{ fontSize: '0.875rem', color: 'var(--muted)', marginBottom: '0.5rem' }}>Hiring | Working</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+            <div style={{ fontSize: '1rem', fontWeight: '600', color: teacher.hiring_status === 'hired' ? '#059669' : '#1d4ed8', textTransform: 'capitalize' }}>
+              {teacher.hiring_status || 'Applied'}
+            </div>
+            <div style={{ fontSize: '0.875rem', fontWeight: '500', color: teacher.working_status === 'Active' ? '#059669' : '#dc2626' }}>
+              {teacher.working_status || 'Active'}
+            </div>
           </div>
         </div>
       </div>

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Extra Classes CRM",
+  title: "Special5 - Online Tuitions CRM",
   description: "Advanced CRM for Education Services",
 };
 

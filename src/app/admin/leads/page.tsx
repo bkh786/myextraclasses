@@ -173,8 +173,8 @@ export default function AdminLeadsPage() {
           <table>
             <thead>
               <tr>
-                <th>Student</th>
                 <th>Contact Info</th>
+                <th>Email ID</th>
                 <th>Class / Subjects</th>
                 <th>Status</th>
                 <th>Created On</th>
@@ -195,9 +195,9 @@ export default function AdminLeadsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
                         <Phone size={14} color="var(--muted)" /> {lead.phone || 'No phone'}
                       </div>
-                      {lead.parent_name && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: '0.25rem' }}>Parent: {lead.parent_name}</div>
-                      )}
+                    </td>
+                    <td>
+                      <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>{lead.email_id || 'N/A'}</div>
                     </td>
                     <td>
                       <div style={{ fontSize: '0.875rem' }}>{lead.class} - {lead.subjects}</div>

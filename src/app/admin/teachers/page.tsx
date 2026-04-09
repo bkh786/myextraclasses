@@ -31,7 +31,7 @@ export default function TeachersPage() {
       const { data, error } = await supabase
         .from('teachers')
         .select('*')
-        .select('*');
+        .order('name');
       
       if (error) throw error;
       setTeachers(data || []);
@@ -45,6 +45,93 @@ export default function TeachersPage() {
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  const handleWorkingStatusChange = async (teacherId: string, newStatus: string) => {
+    try {
+      // Find teacher details for unbind logic
+      const teacher = teachers.find(t => (t.teacher_id || t.id) === teacherId);
+      const actualId = teacher.teacher_id || teacher.id;
+
+      const { error } = await supabase
+        .from('teachers')
+        .update({ working_status: newStatus })
+        .eq(teacher.teacher_id ? 'teacher_id' : 'id', actualId);
+      
+      if (error) throw error;
+
+      if (newStatus === 'Inactive') {
+        await handleUnassignTeacherFromBatches(actualId);
+      } else {
+        fetchTeachers();
+      }
+    } catch (err: any) {
+      console.error('Error updating status:', err);
+      alert('Failed to update status');
+    }
+  };
+
+  const handleUnassignTeacherFromBatches = async (teacherId: string) => {
+    try {
+      setLoading(true);
+      // 1. Unbind teacher from all their batches
+      const { error } = await supabase
+        .from('batches')
+        .update({ teacher_id: null })
+        .eq('teacher_id', teacherId);
+      
+      if (error) throw error;
+
+      fetchTeachers();
+      alert('Teacher deactivated. All assigned batches are now teacherless, but students remain enrolled.');
+    } catch (err: any) {
+      console.error('Error unassigning teacher:', err);
+      alert('Teacher deactivated but failed to unassign from batches automatically. Please check manually.');
+      fetchTeachers();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHireTeacher = async (teacher: any) => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/admin/create-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: teacher.email,
+          name: teacher.name,
+          role: 'TEACHER',
+          details: {
+            phone: teacher.phone
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create teacher account');
+
+      // Update teacher record with the new UUID and status
+      const { error: updError } = await supabase
+        .from('teachers')
+        .update({ 
+          teacher_id: data.user.id,
+          hiring_status: 'hired',
+          working_status: 'Active'
+        })
+        .eq('id', teacher.id);
+      
+      if (updError) throw updError;
+
+      alert(`${teacher.name} has been hired successfully. Credentials sent to ${teacher.email}`);
+      fetchTeachers();
+    } catch (err: any) {
+      console.error('Error hiring teacher:', err);
+      alert(err.message || 'Failed to hire teacher');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTeachers = teachers.filter(teacher => 
     teacher.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -71,7 +158,7 @@ export default function TeachersPage() {
             Hire New Teacher
           </button>
         </div>
-      </div>
+        </div>
 
       <ActionModal
         isOpen={isModalOpen}
@@ -87,6 +174,8 @@ export default function TeachersPage() {
           onCancel={() => setIsModalOpen(false)}
         />
       </ActionModal>
+
+
 
       <div className="grid grid-cols-3 gap-6 mb-8" style={{ marginBottom: '2rem' }}>
         <div className="card">
@@ -153,9 +242,9 @@ export default function TeachersPage() {
               <thead style={{ backgroundColor: '#f9fafb', borderBottom: '1px solid var(--card-border)' }}>
                 <tr>
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Teacher Name</th>
-                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Subjects / Expertise</th>
+                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Hiring Status</th>
+                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Working Status</th>
                    <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Salary / Batch</th>
-                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Status</th>
                   <th style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Action</th>
                 </tr>
               </thead>
@@ -174,28 +263,54 @@ export default function TeachersPage() {
                       </div>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
-                      <div style={{ fontWeight: '500' }}>{teacher.subjects}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{teacher.classes}</div>
+                      <span className="badge" style={{
+                        backgroundColor: teacher.hiring_status === 'hired' ? '#ecfdf5' : teacher.hiring_status === 'rejected' ? '#fef2f2' : '#eff6ff',
+                        color: teacher.hiring_status === 'hired' ? '#047857' : teacher.hiring_status === 'rejected' ? '#991b1b' : '#1d4ed8',
+                        textTransform: 'capitalize'
+                      }}>
+                        {teacher.hiring_status || 'Applied'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <select 
+                        value={teacher.working_status || 'Active'} 
+                        onChange={(e) => handleWorkingStatusChange(teacher.teacher_id || teacher.id, e.target.value)}
+                        style={{
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '6px',
+                          border: '1px solid var(--card-border)',
+                          fontSize: '0.875rem',
+                          backgroundColor: (teacher.working_status || 'Active') === 'Active' ? '#f0fdf4' : '#fef2f2',
+                          color: (teacher.working_status || 'Active') === 'Active' ? '#166534' : '#991b1b',
+                          fontWeight: '500'
+                        }}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
                     </td>
                     <td style={{ padding: '1rem 1.5rem', color: 'var(--muted)', fontSize: '0.875rem' }}>
                       ₹{teacher.salary_per_batch?.toLocaleString() || 'N/A'}
                     </td>
-                    <td style={{ padding: '1rem 1.5rem' }}>
-                      <span className="badge" style={{
-                        backgroundColor: teacher.status === 'Active' ? '#ecfdf5' : '#fef2f2',
-                        color: teacher.status === 'Active' ? '#047857' : '#991b1b'
-                      }}>
-                        {teacher.status || 'Active'}
-                      </span>
-                    </td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                      <button 
-                        onClick={() => router.push(`/admin/teachers/${teacher.teacher_id || teacher.id}`)}
-                        className="btn btn-secondary" 
-                        style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
-                      >
-                        View Profile
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        {teacher.hiring_status === 'applied' && (
+                          <button 
+                            onClick={() => handleHireTeacher(teacher)}
+                            className="btn btn-primary" 
+                            style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', backgroundColor: '#10b981' }}
+                          >
+                            Hire
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => router.push(`/admin/teachers/${teacher.teacher_id || teacher.id}`)}
+                          className="btn btn-secondary" 
+                          style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem' }}
+                        >
+                          View Profile
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )) : (
@@ -210,7 +325,7 @@ export default function TeachersPage() {
           )}
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', fontSize: '0.875rem' }}>
             Live faculty database active
-          </div>
+        </div>
         </div>
       </div>
     </div>

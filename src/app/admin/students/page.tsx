@@ -53,7 +53,7 @@ export default function StudentsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '700' }}>Student Management</h1>
-          <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>View and manage all active students at Extra Classes.</p>
+          <p style={{ color: 'var(--muted)', marginTop: '0.25rem' }}>View and manage all active students at Special5 - Online Tuitions.</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={fetchStudents} className="btn btn-secondary" style={{ padding: '0.5rem' }}>

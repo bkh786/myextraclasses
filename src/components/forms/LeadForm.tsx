@@ -25,7 +25,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
 
   const [formData, setFormData] = useState({
     student_name: '',
-    parent_name: '',
+    email_id: '',
     class: '',
     source: 'Website',
     status: 'Received'
@@ -86,7 +86,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
           {
             student_name: formData.student_name,
             phone: finalPhone,
-            parent_name: formData.parent_name,
+            email_id: formData.email_id,
             class: formData.class,
             subjects: selectedSubjects.join(', '),
             source: formData.source,
@@ -193,13 +193,14 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2 md:col-span-1">
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Parent Name</label>
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Email ID *</label>
           <input 
-            type="text" 
-            name="parent_name" 
-            placeholder="Contact person name" 
+            type="email" 
+            name="email_id" 
+            required
+            placeholder="student@example.com" 
             className="input" 
-            value={formData.parent_name}
+            value={formData.email_id}
             onChange={handleChange}
           />
         </div>

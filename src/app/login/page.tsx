@@ -69,7 +69,7 @@ function LoginForm() {
     <>
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <img src="/logo.png" alt="Extra Classes" style={{ height: '80px', objectFit: 'contain' }} />
+          <img src="/Special5-logo.png" alt="Special5 - Online Tuitions" style={{ height: '80px', objectFit: 'contain' }} />
         </div>
         <p style={{ 
           color: 'var(--muted)', 
@@ -131,7 +131,7 @@ function LoginForm() {
               type="email" 
               required 
               className="input" 
-              placeholder="you@extraclasses.com"
+              placeholder="you@special5.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ paddingLeft: '2.75rem' }} 

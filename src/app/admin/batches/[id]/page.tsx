@@ -21,44 +21,96 @@ export default function BatchDetailPage() {
   const [batch, setBatch] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [teachers, setTeachers] = useState<any[]>([]);
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
 
-  useEffect(() => {
-    async function loadBatchData() {
-      if (!id) return;
-      setLoading(true);
+  const loadBatchData = async () => {
+    if (!id) return;
+    setLoading(true);
 
-      // 1. Fetch Batch with Teacher Profile
-      const { data: bData, error: bError } = await supabase
-        .from('batches')
-        .select('*, profiles:teacher_id(name, email)')
-        .eq('batch_id', id)
-        .single();
+    // 1. Fetch Batch with Teacher Profile
+    const { data: bData, error: bError } = await supabase
+      .from('batches')
+      .select('*, profiles:teacher_id(name, email)')
+      .eq('batch_id', id)
+      .single();
 
-      if (bError) {
-        console.error('Error fetching batch:', bError);
-        router.push('/admin/batches');
-        return;
-      }
-      setBatch(bData);
+    if (bError) {
+      console.error('Error fetching batch:', bError);
+      router.push('/admin/batches');
+      return;
+    }
+    setBatch(bData);
 
-      // 2. Fetch Students mapped via batch_students
-      const { data: sMapping, error: sError } = await supabase
-        .from('batch_students')
-        .select('student_id, students(name, class, join_date)')
-        .eq('batch_id', id);
+    // 2. Fetch Students mapped via batch_students
+    const { data: sMapping, error: sError } = await supabase
+      .from('batch_students')
+      .select('student_id, students(name, class, join_date)')
+      .eq('batch_id', id);
 
-      if (sMapping) {
-        const studentList = sMapping.map((m: any) => m.students);
-        setStudents(studentList);
-      }
-
-      setLoading(false);
+    if (sMapping) {
+      const studentList = sMapping.map((m: any) => m.students);
+      setStudents(studentList);
     }
 
+    // 3. Fetch all active teachers for remapping
+    const { data: tData } = await supabase
+      .from('teachers')
+      .select('*')
+      .eq('working_status', 'Active');
+    
+    setTeachers(tData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadBatchData();
   }, [id]);
 
+  const handleRemapTeacher = async () => {
+    if (!selectedTeacherId) return;
+    setLoading(true);
+
+    try {
+      const selectedTeacher = teachers.find(t => (t.teacher_id || t.id) === selectedTeacherId);
+      if (!selectedTeacher) return;
+
+      const tFirstName = selectedTeacher.name.split(' ')[0];
+      
+      // Extract start time from timing string if possible, or use name pattern
+      // Pattern: "Mon-Wed-Fri, 5:00 PM - 6:30 PM" -> "5:00 PM"
+      let startTime = 'Set Time';
+      if (batch.timing && batch.timing.includes(',')) {
+        const timePart = batch.timing.split(',')[1].trim(); // "5:00 PM - 6:30 PM"
+        startTime = timePart.split('-')[0].trim(); // "5:00 PM"
+      } else if (batch.name.includes('|')) {
+        startTime = batch.name.split('|')[1].trim();
+      }
+
+      const newBatchName = `${tFirstName} | ${startTime}`;
+
+      const { error } = await supabase
+        .from('batches')
+        .update({ 
+          teacher_id: selectedTeacherId,
+          name: newBatchName
+        })
+        .eq('batch_id', id);
+      
+      if (error) throw error;
+      
+      await loadBatchData();
+      alert(`Teacher remapped successfully to ${newBatchName}`);
+    } catch (err: any) {
+      console.error('Error remapping teacher:', err);
+      alert('Failed to remap teacher');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
+// ... rest of loading logic
     return (
       <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 className="animate-spin" size={32} color="var(--primary)" />
@@ -86,6 +138,29 @@ export default function BatchDetailPage() {
                <Users size={14} /> {batch.profiles?.name || 'No Teacher Assigned'}
             </span>
           </div>
+          {!batch.teacher_id && (
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+               <select 
+                 className="input" 
+                 style={{ fontSize: '0.875rem', height: '36px', padding: '0 0.5rem' }}
+                 value={selectedTeacherId}
+                 onChange={(e) => setSelectedTeacherId(e.target.value)}
+               >
+                 <option value="">Select Teacher to Remap</option>
+                 {teachers.map(t => (
+                   <option key={t.teacher_id || t.id} value={t.teacher_id || t.id}>{t.name}</option>
+                 ))}
+               </select>
+               <button 
+                 onClick={handleRemapTeacher} 
+                 className="btn btn-primary" 
+                 style={{ padding: '0.375rem 1rem', fontSize: '0.875rem' }}
+                 disabled={!selectedTeacherId || loading}
+               >
+                 Assign
+               </button>
+            </div>
+          )}
         </div>
       </div>
 
