@@ -76,7 +76,7 @@ export default function AdminLeadsPage() {
       const { error } = await supabase
         .from('leads')
         .update({ status: newStatus })
-        .eq('id', leadId);
+        .eq('lead_id', leadId);
       
       if (error) throw error;
       

@@ -78,7 +78,7 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
       }
 
       // 3. Update Lead Status
-      await supabase.from('leads').update({ status: 'Converted' }).eq(lead.lead_id ? 'lead_id' : 'id', lead.lead_id || lead.id);
+      await supabase.from('leads').update({ status: 'Converted' }).eq('lead_id', lead.lead_id || lead.id);
 
       onSuccess();
     } catch (err: any) {

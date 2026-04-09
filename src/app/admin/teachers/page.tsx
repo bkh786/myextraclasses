@@ -119,7 +119,7 @@ export default function TeachersPage() {
           hiring_status: 'hired',
           working_status: 'Active'
         })
-        .eq('id', teacher.id);
+        .eq('teacher_id', teacher.teacher_id || teacher.id);
       
       if (updError) throw updError;
 
