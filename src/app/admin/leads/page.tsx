@@ -88,7 +88,7 @@ export default function AdminLeadsPage() {
       fetchLeads();
     } catch (err: any) {
       console.error('Error updating status:', err);
-      alert('Failed to update status');
+      alert(`Failed to update status: ${err.message || 'Unknown error'}`);
     }
   };
 
@@ -183,18 +183,17 @@ export default function AdminLeadsPage() {
             </thead>
             <tbody>
               {filteredLeads.length > 0 ? filteredLeads.map((lead) => {
+                const isConverted = lead.status === 'Converted';
                 const status = getStatusColor(lead.status || 'Received');
-                const StatusIcon = status.icon;
+                
                 return (
-                  <tr key={lead.id}>
+                  <tr key={lead.id || lead.lead_id}>
                     <td>
                       <div style={{ fontWeight: '600' }}>{lead.student_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Source: {lead.source || 'N/A'}</div>
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
-                        <Phone size={14} color="var(--muted)" /> {lead.phone || 'No phone'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                        <Phone size={12} /> {lead.phone || 'N/A'}
                       </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>Source: {lead.source || 'N/A'}</div>
                     </td>
                     <td>
                       <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>{lead.email_id || 'N/A'}</div>
@@ -205,7 +204,8 @@ export default function AdminLeadsPage() {
                     <td>
                       <select 
                         value={lead.status || 'Received'} 
-                        onChange={(e) => handleStatusUpdate(lead.id, e.target.value)}
+                        onChange={(e) => handleStatusUpdate(lead.id || lead.lead_id, e.target.value)}
+                        disabled={isConverted}
                         style={{ 
                           padding: '0.375rem 0.75rem', 
                           borderRadius: '20px', 
@@ -214,14 +214,19 @@ export default function AdminLeadsPage() {
                           backgroundColor: status.bg,
                           color: status.text,
                           border: 'none',
-                          cursor: 'pointer',
-                          outline: 'none'
+                          cursor: isConverted ? 'not-allowed' : 'pointer',
+                          outline: 'none',
+                          opacity: isConverted ? 0.7 : 1
                         }}
                       >
                         <option value="Received">Received</option>
                         <option value="Connected">Connected</option>
                         <option value="Demo Scheduled">Demo Scheduled</option>
-                        <option value="Converted">Converted</option>
+                        {isConverted ? (
+                           <option value="Converted">Converted</option>
+                        ) : (
+                           <option value="Converted" disabled>Converted (Via System)</option>
+                        )}
                         <option value="Lost">Lost</option>
                       </select>
                     </td>
@@ -233,7 +238,7 @@ export default function AdminLeadsPage() {
                         <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
                           <Mail size={16} />
                         </button>
-                        {lead.status !== 'Converted' ? (
+                        {!isConverted ? (
                           <button 
                             onClick={() => setConversionLead(lead)}
                             className="btn btn-primary" 
@@ -242,7 +247,7 @@ export default function AdminLeadsPage() {
                             Convert
                           </button>
                         ) : (
-                          <button className="btn btn-secondary" style={{ padding: '0.5rem' }}>
+                          <button className="btn btn-secondary" style={{ padding: '0.5rem', opacity: 0.5, cursor: 'not-allowed' }} disabled>
                             <CheckCircle2 size={16} color="#10b981" />
                           </button>
                         )}
