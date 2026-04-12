@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -24,6 +25,8 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Script src="https://cdn.botpress.cloud/webchat/v3.6/inject.js" strategy="afterInteractive" />
+        <Script src="https://files.bpcontent.cloud/2026/04/12/07/20260412074840-JPHH5AD4.js" strategy="afterInteractive" />
       </body>
     </html>
   );
