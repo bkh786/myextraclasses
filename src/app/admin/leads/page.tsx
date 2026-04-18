@@ -13,12 +13,14 @@ import {
   Clock,
   XCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Upload
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
 import LeadForm from '@/components/forms/LeadForm';
 import LeadConversionForm from '@/components/forms/LeadConversionForm';
+import LeadBulkUploadForm from '@/components/forms/LeadBulkUploadForm';
 
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<any[]>([]);
@@ -26,6 +28,7 @@ export default function AdminLeadsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [conversionLead, setConversionLead] = useState<any | null>(null);
 
   const fetchLeads = async () => {
@@ -104,6 +107,14 @@ export default function AdminLeadsPage() {
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
           <button 
+            onClick={() => setIsUploadModalOpen(true)}
+            className="btn btn-secondary"
+            style={{ backgroundColor: '#f1f5f9', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
+          >
+            <Upload size={18} />
+            Bulk Upload
+          </button>
+          <button 
             onClick={() => setIsModalOpen(true)}
             className="btn btn-primary"
           >
@@ -112,6 +123,21 @@ export default function AdminLeadsPage() {
           </button>
         </div>
       </div>
+
+      <ActionModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        title="Bulk Upload Leads"
+        description="Upload an Excel sheet to import multiple leads at once."
+      >
+        <LeadBulkUploadForm 
+          onSuccess={() => {
+            setIsUploadModalOpen(false);
+            fetchLeads();
+          }}
+          onCancel={() => setIsUploadModalOpen(false)}
+        />
+      </ActionModal>
 
       <ActionModal
         isOpen={isModalOpen}

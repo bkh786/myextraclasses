@@ -74,8 +74,8 @@ const StatCard = ({ title, value, subValue, growth, icon: Icon, color }: any) =>
 );
 
 export default function AdminDashboard() {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number | string>('all');
+  const [selectedYear, setSelectedYear] = useState<number | string>('all');
 
   const { stats, loading: statsLoading, refresh } = useAdminStats(selectedMonth, selectedYear);
   const { trends, loading: trendsLoading } = useRevenueTrends();
@@ -145,18 +145,20 @@ export default function AdminDashboard() {
             className="input" 
             style={{ width: '120px', height: '40px' }} 
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+            onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
           >
+            <option value="all">All Months</option>
             {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, idx) => (
               <option key={m} value={idx + 1}>{m}</option>
             ))}
           </select>
           <select 
             className="input" 
-            style={{ width: '100px', height: '40px' }} 
+            style={{ width: '120px', height: '40px' }} 
             value={selectedYear}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : parseInt(e.target.value))}
           >
+            <option value="all">All Years</option>
             {['2024', '2025', '2026', '2027'].map(y => (
               <option key={y} value={parseInt(y)}>{y}</option>
             ))}

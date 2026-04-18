@@ -20,7 +20,7 @@ export interface AdminStats {
   batch_fill_rate: number;
 }
 
-export function useAdminStats(month?: number, year?: number) {
+export function useAdminStats(month: number | string = 'all', year: number | string = 'all') {
   const [stats, setStats] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
@@ -29,8 +29,8 @@ export function useAdminStats(month?: number, year?: number) {
     try {
       setLoading(true);
       
-      const currentMonth = month || new Date().getMonth() + 1;
-      const currentYear = year || new Date().getFullYear();
+      const currentMonth = month === 'all' ? null : Number(month);
+      const currentYear = year === 'all' ? null : Number(year);
 
       // Call the RPC for dynamic filtering
       const { data, error } = await supabase.rpc('get_admin_dashboard_stats', {
@@ -39,7 +39,7 @@ export function useAdminStats(month?: number, year?: number) {
       });
 
       if (error) throw error;
-      setStats(data);
+      setStats(Array.isArray(data) ? data[0] : data);
     } catch (err) {
       console.error('Error fetching admin stats:', err);
       setError(err);
