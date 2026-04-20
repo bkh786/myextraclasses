@@ -17,6 +17,7 @@ import {
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
 import TeacherForm from '@/components/forms/TeacherForm';
+import HiringConfirmationForm from '@/components/forms/HiringConfirmationForm';
 
 export default function TeachersPage() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function TeachersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHiringModalOpen, setIsHiringModalOpen] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
 
   const fetchTeachers = async () => {
     try {
@@ -92,45 +95,9 @@ export default function TeachersPage() {
     }
   };
 
-  const handleHireTeacher = async (teacher: any) => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/admin/create-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: teacher.email,
-          name: teacher.name,
-          role: 'TEACHER',
-          details: {
-            phone: teacher.phone
-          }
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create teacher account');
-
-      // Update teacher record with the new UUID and status
-      const { error: updError } = await supabase
-        .from('teachers')
-        .update({ 
-          teacher_id: data.user.id,
-          hiring_status: 'hired',
-          working_status: 'Active'
-        })
-        .eq('teacher_id', teacher.teacher_id || teacher.id);
-      
-      if (updError) throw updError;
-
-      alert(`${teacher.name} has been hired successfully. Credentials sent to ${teacher.email}`);
-      fetchTeachers();
-    } catch (err: any) {
-      console.error('Error hiring teacher:', err);
-      alert(err.message || 'Failed to hire teacher');
-    } finally {
-      setLoading(false);
-    }
+  const handleHireClick = (teacher: any) => {
+    setSelectedTeacher(teacher);
+    setIsHiringModalOpen(true);
   };
 
   const filteredTeachers = teachers.filter(teacher => 
@@ -173,6 +140,24 @@ export default function TeachersPage() {
           }}
           onCancel={() => setIsModalOpen(false)}
         />
+      </ActionModal>
+
+      <ActionModal
+        isOpen={isHiringModalOpen}
+        onClose={() => setIsHiringModalOpen(false)}
+        title="Confirm Hiring"
+        description="Verify profile details and set salary for the new instructor."
+      >
+        {selectedTeacher && (
+          <HiringConfirmationForm 
+            teacher={selectedTeacher}
+            onSuccess={() => {
+              setIsHiringModalOpen(false);
+              fetchTeachers();
+            }}
+            onCancel={() => setIsHiringModalOpen(false)}
+          />
+        )}
       </ActionModal>
 
 
@@ -296,7 +281,7 @@ export default function TeachersPage() {
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                         {teacher.hiring_status === 'applied' && (
                           <button 
-                            onClick={() => handleHireTeacher(teacher)}
+                            onClick={() => handleHireClick(teacher)}
                             className="btn btn-primary" 
                             style={{ padding: '0.375rem 0.75rem', fontSize: '0.75rem', backgroundColor: '#10b981' }}
                           >

@@ -58,10 +58,19 @@ export async function POST(req: Request) {
 
     // 3. Write data to relevant role-based tables
     if (role.toUpperCase() === 'TEACHER') {
-      const { error: teacherError } = await supabaseAdmin.from('teachers').insert([
-        { teacher_id: userId, name, email, phone: details?.phone || '', working_status: 'Active', hiring_status: 'hired' }
-      ]);
-      if (teacherError) throw new Error(`Teacher insert failed: ${teacherError.message}`);
+      const { error: teacherError } = await supabaseAdmin.from('teachers').upsert(
+        { 
+          teacher_id: userId, 
+          name, 
+          email, 
+          phone: details?.phone || '', 
+          working_status: 'Active', 
+          hiring_status: 'hired',
+          salary_per_batch: details?.salary_per_batch || null
+        },
+        { onConflict: 'email' }
+      );
+      if (teacherError) throw new Error(`Teacher insert/update failed: ${teacherError.message}`);
     } else if (role.toUpperCase() === 'STUDENT') {
       const { error: studentError } = await supabaseAdmin.from('students').insert([
         { 
