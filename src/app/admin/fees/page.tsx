@@ -13,7 +13,8 @@ import {
   Plus,
   RefreshCw,
   FileText,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
