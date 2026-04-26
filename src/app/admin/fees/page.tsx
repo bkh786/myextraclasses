@@ -11,19 +11,23 @@ import {
   ArrowUpRight, 
   AlertCircle,
   Plus,
-  Loader2,
   RefreshCw,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
 import FeeForm from '@/components/forms/FeeForm';
+import FeeBulkUploadForm from '@/components/forms/FeeBulkUploadForm';
+import { useAdminStats } from '@/hooks/use-admin-stats';
 
 export default function FeesPage() {
   const [fees, setFees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const { stats, loading: statsLoading } = useAdminStats();
 
   const fetchFees = async () => {
     try {
@@ -72,6 +76,14 @@ export default function FeesPage() {
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
           <button 
+            onClick={() => setIsUploadModalOpen(true)}
+            className="btn btn-secondary"
+            style={{ backgroundColor: '#f1f5f9', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
+          >
+            <Upload size={18} />
+            Bulk Upload
+          </button>
+          <button 
             onClick={() => setIsModalOpen(true)}
             className="btn btn-primary"
           >
@@ -96,11 +108,52 @@ export default function FeesPage() {
         />
       </ActionModal>
 
+      <ActionModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        title="Bulk Upload Payment Collections"
+        description="Upload an Excel sheet to import multiple fee collections at once."
+      >
+        <FeeBulkUploadForm 
+          onSuccess={() => {
+            setIsUploadModalOpen(false);
+            fetchFees();
+          }}
+          onCancel={() => setIsUploadModalOpen(false)}
+        />
+      </ActionModal>
+
       <div className="grid grid-cols-4 gap-6 mb-8" style={{ marginBottom: '2rem' }}>
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '12px' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', color: '#ef4444', borderRadius: '12px' }}>
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Total Outstanding Fee</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                {statsLoading ? <Loader2 size={16} className="animate-spin" /> : `₹${stats?.total_pending_fees?.toLocaleString() || pendingTotal.toLocaleString()}`}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: '#e0e7ff', color: 'var(--primary)', borderRadius: '12px' }}>
               <TrendingUp size={24} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Current Month Expected</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>
+                 {statsLoading ? <Loader2 size={16} className="animate-spin" /> : `₹${stats?.current_month_fee_expected?.toLocaleString() || 0}`}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ padding: '0.75rem', backgroundColor: '#ecfdf5', color: '#10b981', borderRadius: '12px' }}>
+              <DollarSign size={24} />
             </div>
             <div>
               <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Collected (Total)</div>
@@ -110,34 +163,12 @@ export default function FeesPage() {
         </div>
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: '#fef2f2', color: '#ef4444', borderRadius: '12px' }}>
-              <AlertCircle size={24} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Pending Total</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>₹{pendingTotal.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ padding: '0.75rem', backgroundColor: '#e0e7ff', color: 'var(--primary)', borderRadius: '12px' }}>
-              <DollarSign size={24} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Transactions</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{fees.length}</div>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ padding: '0.75rem', backgroundColor: '#fef3c7', color: '#f59e0b', borderRadius: '12px' }}>
               <CalendarIcon size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Last Payment</div>
-              <div style={{ fontSize: '1rem', fontWeight: '700' }}>{fees[0]?.payment_date || 'N/A'}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Transactions</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{fees.length}</div>
             </div>
           </div>
         </div>

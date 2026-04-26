@@ -47,7 +47,14 @@ export async function POST(req: Request) {
 
     // 2. Set strict Auth Profile Mapping
     const { error: profileError } = await supabaseAdmin.from('profiles').upsert(
-      { id: userId, name, role: role.toUpperCase(), email, phone: details?.phone || '' },
+      { 
+        id: userId, 
+        name, 
+        role: role.toUpperCase(), 
+        email, 
+        phone: details?.phone || '',
+        permissions: details?.permissions || null
+      },
       { onConflict: 'id' }
     );
 
@@ -65,12 +72,22 @@ export async function POST(req: Request) {
           email, 
           phone: details?.phone || '', 
           working_status: 'Active', 
-          hiring_status: 'hired',
-          salary_per_batch: details?.salary_per_batch || null
+          hiring_status: 'selected'
         },
         { onConflict: 'email' }
       );
       if (teacherError) throw new Error(`Teacher insert/update failed: ${teacherError.message}`);
+
+      // Insert into teachers_rate_card
+      const { error: rateCardError } = await supabaseAdmin.from('teachers_rate_card').insert([
+        {
+          teacher_id: userId,
+          class_1_to_4_rate: details?.class_1_to_4_rate || 0,
+          class_5_to_8_rate: details?.class_5_to_8_rate || 0,
+          class_9_to_10_rate: details?.class_9_to_10_rate || 0
+        }
+      ]);
+      if (rateCardError) throw new Error(`Teacher rate card insert failed: ${rateCardError.message}`);
     } else if (role.toUpperCase() === 'STUDENT') {
       const { error: studentError } = await supabaseAdmin.from('students').insert([
         { 

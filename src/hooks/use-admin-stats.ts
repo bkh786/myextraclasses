@@ -5,18 +5,15 @@ import { supabase } from '@/lib/supabase-client';
 
 export interface AdminStats {
   total_leads: number;
-  total_converted_students: number;
+  students_connected: number;
+  demo_scheduled_count: number;
   active_students: number;
+  total_converted_students: number;
   total_teachers: number;
   total_batches: number;
-  new_leads_this_month: number;
-  demo_scheduled_count: number;
-  demo_completed_count: number;
   monthly_revenue: number;
   total_pending_fees: number;
   total_teacher_payout_liability: number;
-  conversion_rate: number;
-  retention_rate: number;
   batch_fill_rate: number;
 }
 
@@ -88,6 +85,30 @@ export function useRevenueTrends() {
         setTrends(data?.reverse() || []);
       } catch (err) {
         console.error('Error fetching revenue trends:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrends();
+  }, []);
+
+  return { trends, loading };
+}
+
+export function useLeadTrends() {
+  const [trends, setTrends] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTrends() {
+      try {
+        const { data, error } = await supabase
+          .from('view_lead_trends')
+          .select('*');
+        if (error) throw error;
+        setTrends(data?.reverse() || []);
+      } catch (err) {
+        console.error('Error fetching lead trends:', err);
       } finally {
         setLoading(false);
       }

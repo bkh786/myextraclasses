@@ -107,7 +107,6 @@ export default function AdminBatchesPage() {
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Faculty</th>
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Schedule</th>
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Students</th>
-                  <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Financials</th>
                   <th style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Action</th>
                 </tr>
               </thead>
@@ -151,9 +150,6 @@ export default function AdminBatchesPage() {
                         <div style={{ width: '80px', height: '4px', backgroundColor: '#f1f5f9', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
                           <div style={{ width: `${(studentCount / (batch.max_students || 5)) * 100}%`, height: '100%', backgroundColor: isFull ? '#ef4444' : 'var(--primary)' }} />
                         </div>
-                      </td>
-                      <td style={{ padding: '1rem 1.5rem' }}>
-                        <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Payout: ₹{batch.teacher_payout}</div>
                       </td>
                       <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>

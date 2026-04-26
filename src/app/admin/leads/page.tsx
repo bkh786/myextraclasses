@@ -14,7 +14,8 @@ import {
   XCircle,
   Loader2,
   RefreshCw,
-  Upload
+  Upload,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
@@ -95,6 +96,34 @@ export default function AdminLeadsPage() {
     }
   };
 
+  const handleDownload = () => {
+    if (!leads.length) return;
+    
+    const headers = ['Lead ID', 'Student Name', 'Email', 'Phone', 'Class', 'Subjects', 'Status', 'Created At'];
+    const csvContent = [
+      headers.join(','),
+      ...leads.map(l => [
+        l.lead_id || l.id,
+        `"${l.student_name || ''}"`,
+        `"${l.email_id || ''}"`,
+        `"${l.phone || ''}"`,
+        `"${l.class || ''}"`,
+        `"${l.subjects || ''}"`,
+        `"${l.status || ''}"`,
+        `"${new Date(l.created_at).toLocaleDateString()}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -113,6 +142,14 @@ export default function AdminLeadsPage() {
           >
             <Upload size={18} />
             Bulk Upload
+          </button>
+          <button 
+            onClick={handleDownload}
+            className="btn btn-secondary"
+            style={{ backgroundColor: '#f1f5f9', color: 'var(--text-color)', border: '1px solid var(--border-color)' }}
+          >
+            <Download size={18} />
+            Export Data
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}

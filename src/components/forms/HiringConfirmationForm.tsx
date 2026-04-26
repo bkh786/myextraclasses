@@ -13,7 +13,9 @@ export default function HiringConfirmationForm({ teacher, onSuccess, onCancel }:
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [salary, setSalary] = useState(teacher.salary_per_batch?.toString() || '');
+  const [rate1to4, setRate1to4] = useState('');
+  const [rate5to8, setRate5to8] = useState('');
+  const [rate9to10, setRate9to10] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,9 @@ export default function HiringConfirmationForm({ teacher, onSuccess, onCancel }:
           role: 'TEACHER',
           details: {
             phone: teacher.phone,
-            salary_per_batch: salary ? parseFloat(salary) : null
+            class_1_to_4_rate: rate1to4 ? parseFloat(rate1to4) : 0,
+            class_5_to_8_rate: rate5to8 ? parseFloat(rate5to8) : 0,
+            class_9_to_10_rate: rate9to10 ? parseFloat(rate9to10) : 0
           }
         })
       });
@@ -122,24 +126,45 @@ export default function HiringConfirmationForm({ teacher, onSuccess, onCancel }:
       </div>
 
       {/* Input Section */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-        <label htmlFor="salary" style={{ fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>
-          Salary per Batch (₹) <span style={{ color: '#ef4444' }}>*</span>
-        </label>
-        <div style={{ position: 'relative' }}>
-          <DollarSign size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-          <input 
-            id="salary"
-            type="number" 
-            required 
-            placeholder="e.g. 5000" 
-            className="input" 
-            style={{ paddingLeft: '2.25rem' }}
-            value={salary}
-            onChange={(e) => setSalary(e.target.value)}
-          />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <h4 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1e293b' }}>Per Student Pass-On Fee (₹)</h4>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+          <div>
+            <label htmlFor="rate1to4" style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Class 1 to 4</label>
+            <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+              <DollarSign size={14} style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                id="rate1to4" type="number" required placeholder="0" className="input" 
+                style={{ paddingLeft: '1.75rem', fontSize: '0.875rem' }}
+                value={rate1to4} onChange={(e) => setRate1to4(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="rate5to8" style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Class 5 to 8</label>
+            <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+              <DollarSign size={14} style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                id="rate5to8" type="number" required placeholder="0" className="input" 
+                style={{ paddingLeft: '1.75rem', fontSize: '0.875rem' }}
+                value={rate5to8} onChange={(e) => setRate5to8(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="rate9to10" style={{ fontSize: '0.75rem', fontWeight: '600', color: '#475569' }}>Class 9 to 10</label>
+            <div style={{ position: 'relative', marginTop: '0.25rem' }}>
+              <DollarSign size={14} style={{ position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                id="rate9to10" type="number" required placeholder="0" className="input" 
+                style={{ paddingLeft: '1.75rem', fontSize: '0.875rem' }}
+                value={rate9to10} onChange={(e) => setRate9to10(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
-        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>Please confirm the per-batch remuneration for this faculty member.</p>
+        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>Please confirm the per-student segment-wise remuneration for this faculty member.</p>
       </div>
 
       {error && (

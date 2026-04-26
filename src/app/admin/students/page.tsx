@@ -48,6 +48,34 @@ export default function StudentsPage() {
     student.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleDownload = () => {
+    if (!students.length) return;
+    
+    const headers = ['Student ID', 'Name', 'Email', 'Class', 'Batch', 'Mode', 'Join Date', 'Pending Fees'];
+    const csvContent = [
+      headers.join(','),
+      ...students.map(s => [
+        s.student_id || s.id,
+        `"${s.name || ''}"`,
+        `"${s.email || ''}"`,
+        `"${s.class || ''}"`,
+        `"${s.mapped_batch || ''}"`,
+        `"${s.mode || ''}"`,
+        `"${s.join_date || ''}"`,
+        s.pending_fees || 0
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `students_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="dashboard-content">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -59,7 +87,7 @@ export default function StudentsPage() {
           <button onClick={fetchStudents} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
-          <button className="btn btn-secondary">
+          <button onClick={handleDownload} className="btn btn-secondary">
             <Download size={18} />
             Export
           </button>

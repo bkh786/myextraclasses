@@ -31,7 +31,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import { useAdminStats, useRevenueTrends } from '@/hooks/use-admin-stats';
+import { useAdminStats, useRevenueTrends, useLeadTrends } from '@/hooks/use-admin-stats';
 import ActionModal from '@/components/common/ActionModal';
 import LeadForm from '@/components/forms/LeadForm';
 import StudentForm from '@/components/forms/StudentForm';
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
 
   const { stats, loading: statsLoading, refresh } = useAdminStats(selectedMonth, selectedYear);
   const { trends, loading: trendsLoading } = useRevenueTrends();
+  const { trends: leadTrends, loading: leadTrendsLoading } = useLeadTrends();
 
   // Modal State
   type ModalType = 'lead' | 'student' | 'teacher' | 'batch' | null;
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
     );
   };
 
-  if (statsLoading || trendsLoading) {
+  if (statsLoading || trendsLoading || leadTrendsLoading) {
     return (
       <div style={{ display: 'flex', height: '60vh', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
         <Loader2 className="animate-spin" size={48} color="var(--primary)" />
@@ -176,18 +177,27 @@ export default function AdminDashboard() {
 
       {/* KPI Section */}
       <div className="grid grid-cols-4 gap-4">
-        <StatCard title="Total Leads" value={stats?.total_leads} growth={12} icon={UserPlus} color="#6366f1" />
-        <StatCard title="Demo Scheduled" value={stats?.demo_scheduled_count} subValue={`${stats?.demo_completed_count} Completed`} icon={Clock} color="#f59e0b" />
-        <StatCard title="Conversion" value={`${stats?.conversion_rate}%`} growth={5} icon={TrendingUp} color="#10b981" />
-        <StatCard title="Active Students" value={stats?.active_students} subValue={`Total: ${stats?.total_converted_students}`} icon={Users} color="#06b6d4" />
+        {/* Row 1 */}
+        <StatCard title="Total Leads" value={stats?.total_leads || 0} icon={UserPlus} color="#6366f1" />
+        <StatCard title="Students Connected" value={stats?.students_connected || 0} icon={Clock} color="#f59e0b" />
+        <StatCard title="Demo Scheduled" value={stats?.demo_scheduled_count || 0} icon={Calendar} color="#8b5cf6" />
+        <StatCard 
+          title="Active Students" 
+          value={stats?.active_students || 0} 
+          subValue={stats?.total_leads > 0 ? `Conversion: ${((stats?.total_converted_students / stats?.total_leads) * 100).toFixed(1)}%` : 'Conversion: 0%'} 
+          icon={Users} color="#10b981" 
+        />
 
-        <StatCard title="Total Teachers" value={stats?.total_teachers} icon={Briefcase} color="#ec4899" />
-        <StatCard title="Active Batches" value={stats?.total_batches} icon={Briefcase} color="#f97316" />
-        <StatCard title="Monthly Revenue" value={`₹${stats?.monthly_revenue.toLocaleString()}`} growth={18} icon={DollarSign} color="#10b981" />
-        <StatCard title="Pending Fees" value={`₹${stats?.total_pending_fees.toLocaleString()}`} icon={AlertCircle} color="#ef4444" />
+        {/* Row 2 */}
+        <StatCard title="Total Teachers on Board" value={stats?.total_teachers || 0} icon={Briefcase} color="#ec4899" />
+        <StatCard title="Active Batches" value={stats?.total_batches || 0} icon={PieChartIcon} color="#f97316" />
+        <StatCard title="Batch Fill Rate" value={`${stats?.batch_fill_rate || 0}%`} icon={TrendingUp} color="#0ea5e9" />
+        <div className="hidden"></div> {/* Empty space to align the 3x3 layout properly if needed, but grid-cols-4 makes it wrap. Let's make it 3 cols maybe? Wait, user asked for rows. I'll leave it as is, or use grid-cols-4 and let it wrap naturally. */}
 
-        <StatCard title="Batch Fill Rate" value={`${stats?.batch_fill_rate}%`} icon={PieChartIcon} color="#6366f1" />
-        <StatCard title="Payout Liability" value={`₹${stats?.total_teacher_payout_liability.toLocaleString()}`} icon={CreditCard} color="#8b5cf6" />
+        {/* Row 3 */}
+        <StatCard title="Monthly Revenue" value={`₹${stats?.monthly_revenue?.toLocaleString() || 0}`} icon={DollarSign} color="#10b981" />
+        <StatCard title="Pending Fees" value={`₹${stats?.total_pending_fees?.toLocaleString() || 0}`} icon={AlertCircle} color="#ef4444" />
+        <StatCard title="Payout Liability" value={`₹${stats?.total_teacher_payout_liability?.toLocaleString() || 0}`} icon={CreditCard} color="#8b5cf6" />
       </div>
 
       {/* Quick Actions Grid */}
@@ -233,41 +243,62 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="card" style={{ gridColumn: 'span 2' }}>
-          <h3 style={{ fontWeight: '700', marginBottom: '1.5rem' }}>Revenue Trends</h3>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="card">
+          <h3 style={{ fontWeight: '700', marginBottom: '1.5rem' }}>Revenue Trends (M-o-M)</h3>
           <div style={{ height: '320px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trends}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorMargin" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
                 <Tooltip />
-                <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Legend />
+                <Area type="monotone" name="Revenue" dataKey="revenue" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" name="Cost" dataKey="cost" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorCost)" />
+                <Area type="monotone" name="Net Margin" dataKey="net_margin" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorMargin)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="card">
-          <h3 style={{ fontWeight: '700', marginBottom: '1.5rem' }}>Lead Status</h3>
-          <div style={{ height: '320px', width: '100%', position: 'relative' }}>
+          <h3 style={{ fontWeight: '700', marginBottom: '1.5rem' }}>Lead Status (M-o-M)</h3>
+          <div style={{ height: '320px', width: '100%' }}>
              <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={conversionData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value">
-                  {conversionData.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
+              <AreaChart data={leadTrends}>
+                <defs>
+                  <linearGradient id="colorInc" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorConv" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} />
                 <Tooltip />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-              </PieChart>
+                <Legend />
+                <Area type="monotone" name="Incoming Leads" dataKey="incoming_leads" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorInc)" />
+                <Area type="monotone" name="Converted" dataKey="converted_leads" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorConv)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>

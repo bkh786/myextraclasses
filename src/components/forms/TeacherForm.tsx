@@ -21,7 +21,9 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
     subjects: '',
     classes: '',
     experience: '',
-    salary_per_batch: '',
+    class_1_to_4_rate: '',
+    class_5_to_8_rate: '',
+    class_9_to_10_rate: '',
     working_status: 'Active',
     hiring_status: 'applied'
   });
@@ -42,7 +44,7 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
     try {
       let teacherUuid = null;
 
-      if (formData.hiring_status === 'hired') {
+      if (formData.hiring_status === 'selected') {
         const res = await fetch('/api/admin/create-account', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -51,7 +53,10 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
             name: formData.name,
             role: 'TEACHER',
             details: {
-              phone: `${countryCode}${phoneNumber}`
+              phone: `${countryCode}${phoneNumber}`,
+              class_1_to_4_rate: formData.class_1_to_4_rate ? parseFloat(formData.class_1_to_4_rate) : 0,
+              class_5_to_8_rate: formData.class_5_to_8_rate ? parseFloat(formData.class_5_to_8_rate) : 0,
+              class_9_to_10_rate: formData.class_9_to_10_rate ? parseFloat(formData.class_9_to_10_rate) : 0
             }
           })
         });
@@ -70,25 +75,33 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
             subjects: formData.subjects,
             classes: formData.classes,
             experience: formData.experience,
-            salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
-            working_status: formData.working_status,
+            working_status: formData.hiring_status === 'selected' ? formData.working_status : 'Inactive',
             hiring_status: formData.hiring_status
           }])
           .select()
           .single();
         
         if (insertError) throw insertError;
+        
+        // Also insert into rate card if we have rates (even if not hired yet)
+        if (data && data.teacher_id) {
+          await supabase.from('teachers_rate_card').insert([{
+            teacher_id: data.teacher_id,
+            class_1_to_4_rate: formData.class_1_to_4_rate ? parseFloat(formData.class_1_to_4_rate) : 0,
+            class_5_to_8_rate: formData.class_5_to_8_rate ? parseFloat(formData.class_5_to_8_rate) : 0,
+            class_9_to_10_rate: formData.class_9_to_10_rate ? parseFloat(formData.class_9_to_10_rate) : 0
+          }]);
+        }
       }
 
       // If hired, we might need to update the additional fields (though the API does some, let's ensure all are set)
-      if (formData.hiring_status === 'hired' && teacherUuid) {
+      if (formData.hiring_status === 'selected' && teacherUuid) {
         await supabase.from('teachers').update({
           subjects: formData.subjects,
           classes: formData.classes,
           experience: formData.experience,
-          salary_per_batch: formData.salary_per_batch ? parseFloat(formData.salary_per_batch) : null,
           working_status: formData.working_status,
-          hiring_status: 'hired'
+          hiring_status: 'selected'
         }).eq('teacher_id', teacherUuid);
       }
 
@@ -196,14 +209,23 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
             <input type="text" name="experience" className="input" placeholder="e.g. 5 years" value={formData.experience} onChange={handleChange} />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Salary per Batch (₹)</label>
-            <input type="number" name="salary_per_batch" className="input" placeholder="e.g. 5000" value={formData.salary_per_batch} onChange={handleChange} />
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Class 1-4 Rate (₹)</label>
+            <input type="number" name="class_1_to_4_rate" className="input" placeholder="e.g. 500" value={formData.class_1_to_4_rate} onChange={handleChange} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Class 5-8 Rate (₹)</label>
+            <input type="number" name="class_5_to_8_rate" className="input" placeholder="e.g. 700" value={formData.class_5_to_8_rate} onChange={handleChange} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Class 9-10 Rate (₹)</label>
+            <input type="number" name="class_9_to_10_rate" className="input" placeholder="e.g. 1000" value={formData.class_9_to_10_rate} onChange={handleChange} />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '600', color: '#64748b', marginBottom: '0.25rem' }}>Hiring Status</label>
             <select name="hiring_status" className="input" style={{ width: '100%' }} value={formData.hiring_status} onChange={handleChange}>
               <option value="applied">Applied</option>
-              <option value="hired">Hired (Create Account)</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="selected">Selected (Create Account)</option>
               <option value="rejected">Rejected</option>
             </select>
           </div>

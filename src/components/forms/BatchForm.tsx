@@ -26,11 +26,12 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
     subject: '',
     teacher_id: '',
     max_students: 5,
-    teacher_payout: '',
     start_date: new Date().toISOString().split('T')[0],
     zoom_link: '',
-    days: 'Mon-Wed-Fri'
+    selectedDays: ['Mon', 'Wed', 'Fri']
   });
+
+  const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   // Pre-populate if in edit mode
   useEffect(() => {
@@ -40,10 +41,9 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
         subject: initialData.subject || '',
         teacher_id: initialData.teacher_id || '',
         max_students: initialData.max_students || 5,
-        teacher_payout: initialData.teacher_payout || '',
         start_date: initialData.start_date || new Date().toISOString().split('T')[0],
         zoom_link: initialData.zoom_link || '',
-        days: initialData.timing?.split(', ')[0] || 'Mon-Wed-Fri'
+        selectedDays: initialData.timing?.split(', ')[0]?.split('-') || ['Mon', 'Wed', 'Fri']
       });
       
       // Parse timing: "Mon-Wed-Fri, 6:00 PM - 7:30 PM"
@@ -106,6 +106,19 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
     }));
   };
 
+  const handleDayToggle = (day: string) => {
+    setFormData(prev => {
+      if (prev.selectedDays.includes(day)) {
+        return { ...prev, selectedDays: prev.selectedDays.filter(d => d !== day) };
+      } else {
+        // Maintain order of days
+        const newDays = [...prev.selectedDays, day];
+        newDays.sort((a, b) => DAYS_OF_WEEK.indexOf(a) - DAYS_OF_WEEK.indexOf(b));
+        return { ...prev, selectedDays: newDays };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -126,7 +139,8 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
        return `${displayH}:${m.toString().padStart(2, '0')} ${ampm}`;
     })();
 
-    const finalTiming = `${formData.days}, ${start12} - ${endTime}`;
+    const finalDays = formData.selectedDays.length > 0 ? formData.selectedDays.join('-') : 'TBA';
+    const finalTiming = `${finalDays}, ${start12} - ${endTime}`;
 
     try {
       const selectedTeacher = teachers.find(t => (t.teacher_id || t.id) === formData.teacher_id);
@@ -147,7 +161,6 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
       if (formData.teacher_id) payload.teacher_id = formData.teacher_id;
       else payload.teacher_id = null;
       
-      if (formData.teacher_payout) payload.teacher_payout = parseFloat(formData.teacher_payout);
       if (formData.zoom_link) payload.zoom_link = formData.zoom_link;
 
       if (isEdit) payload.batch_id = initialData.batch_id;
@@ -239,11 +252,37 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
             ))}
           </select>
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Days</label>
-          <div style={{ position: 'relative' }}>
-            <Calendar size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input type="text" name="days" required placeholder="e.g. Mon-Wed-Fri" className="input" style={{ paddingLeft: '2.5rem' }} value={formData.days} onChange={handleChange} disabled={isEdit} />
+        <div className="col-span-2">
+          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Days *</label>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {DAYS_OF_WEEK.map(day => (
+              <label 
+                key={day} 
+                style={{
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.25rem',
+                  padding: '0.375rem 0.75rem',
+                  backgroundColor: formData.selectedDays.includes(day) ? '#e0e7ff' : '#f8fafc',
+                  color: formData.selectedDays.includes(day) ? 'var(--primary)' : '#64748b',
+                  border: `1px solid ${formData.selectedDays.includes(day) ? 'var(--primary)' : '#e2e8f0'}`,
+                  borderRadius: '6px',
+                  cursor: isEdit ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  opacity: isEdit ? 0.7 : 1
+                }}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={formData.selectedDays.includes(day)}
+                  onChange={() => handleDayToggle(day)}
+                  disabled={isEdit}
+                  style={{ display: 'none' }}
+                />
+                {day}
+              </label>
+            ))}
           </div>
         </div>
 
@@ -281,7 +320,7 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Start Date *</label>
           <input type="date" name="start_date" required className="input" value={formData.start_date} onChange={handleChange} disabled={isEdit} />
         </div>
-        <div>
+        <div className="col-span-1">
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Max Students</label>
           <input 
             type="number" 
@@ -293,11 +332,7 @@ export default function BatchForm({ onSuccess, onCancel, initialData }: BatchFor
             style={{ backgroundColor: '#f1f5f9', color: '#64748b', cursor: 'not-allowed' }}
           />
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Teacher Payout (₹)</label>
-          <input type="number" name="teacher_payout" className="input" placeholder="e.g. 5000" value={formData.teacher_payout} onChange={handleChange} />
-        </div>
-        <div className="col-span-2">
+        <div className="col-span-1">
           <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#475569', marginBottom: '0.5rem' }}>Zoom / Meet Link</label>
           <input type="url" name="zoom_link" className="input" placeholder="https://zoom.us/j/..." value={formData.zoom_link} onChange={handleChange} />
         </div>

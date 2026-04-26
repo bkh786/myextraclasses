@@ -12,7 +12,8 @@ import {
   MoreVertical,
   Loader2,
   RefreshCw,
-  UserCheck
+  UserCheck,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase-client';
 import ActionModal from '@/components/common/ActionModal';
@@ -106,6 +107,35 @@ export default function TeachersPage() {
     teacher.subjects?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleDownload = () => {
+    if (!teachers.length) return;
+    const headers = ['Teacher ID', 'Name', 'Email', 'Phone', 'Subjects', 'Hiring Status', 'Working Status'];
+    const csvContent = [
+      headers.join(','),
+      ...teachers.map(t => [
+        t.teacher_id || t.id,
+        `"${t.name || ''}"`,
+        `"${t.email || ''}"`,
+        `"${t.phone || ''}"`,
+        `"${t.subjects || ''}"`,
+        `"${t.hiring_status || ''}"`,
+        `"${t.working_status || ''}"`
+      ].join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `teachers_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const applicationsReceived = teachers.filter(t => t.hiring_status === 'applied').length;
+  const applicationsReviewed = teachers.filter(t => t.hiring_status === 'reviewed').length;
+  const teachersHired = teachers.filter(t => t.hiring_status === 'selected' || t.hiring_status === 'hired').length;
+
   return (
     <div className="dashboard-content">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -116,6 +146,9 @@ export default function TeachersPage() {
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button onClick={fetchTeachers} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button onClick={handleDownload} className="btn btn-secondary" style={{ padding: '0.5rem' }}>
+            <Download size={18} />
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
@@ -169,8 +202,8 @@ export default function TeachersPage() {
               <Users size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Total Faculty</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{teachers.length}</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Applications Received</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{applicationsReceived}</div>
             </div>
           </div>
         </div>
@@ -180,19 +213,19 @@ export default function TeachersPage() {
               <TrendingUp size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Avg. Efficiency</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>94%</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Reviewed</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{applicationsReviewed}</div>
             </div>
           </div>
         </div>
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ padding: '0.75rem', backgroundColor: '#fef3c7', color: '#f59e0b', borderRadius: '12px' }}>
-              <DollarSign size={24} />
+              <UserCheck size={24} />
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Current Month</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>₹1.4L</div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Hired</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{teachersHired}</div>
             </div>
           </div>
         </div>
@@ -229,7 +262,6 @@ export default function TeachersPage() {
                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Teacher Name</th>
                    <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Hiring Status</th>
                    <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Working Status</th>
-                   <th style={{ textAlign: 'left', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Salary / Batch</th>
                   <th style={{ textAlign: 'center', padding: '1rem 1.5rem', fontSize: '0.75rem', fontWeight: '700', color: 'var(--muted)', textTransform: 'uppercase' }}>Action</th>
                 </tr>
               </thead>
@@ -257,25 +289,26 @@ export default function TeachersPage() {
                       </span>
                     </td>
                     <td style={{ padding: '1rem 1.5rem' }}>
-                      <select 
-                        value={teacher.working_status || 'Active'} 
-                        onChange={(e) => handleWorkingStatusChange(teacher.teacher_id || teacher.id, e.target.value)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '6px',
-                          border: '1px solid var(--card-border)',
-                          fontSize: '0.875rem',
-                          backgroundColor: (teacher.working_status || 'Active') === 'Active' ? '#f0fdf4' : '#fef2f2',
-                          color: (teacher.working_status || 'Active') === 'Active' ? '#166534' : '#991b1b',
-                          fontWeight: '500'
-                        }}
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                      </select>
-                    </td>
-                    <td style={{ padding: '1rem 1.5rem', color: 'var(--muted)', fontSize: '0.875rem' }}>
-                      ₹{teacher.salary_per_batch?.toLocaleString() || 'N/A'}
+                      {(teacher.hiring_status === 'selected' || teacher.hiring_status === 'hired') ? (
+                        <select 
+                          value={teacher.working_status || 'Active'} 
+                          onChange={(e) => handleWorkingStatusChange(teacher.teacher_id || teacher.id, e.target.value)}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            borderRadius: '6px',
+                            border: '1px solid var(--card-border)',
+                            fontSize: '0.875rem',
+                            backgroundColor: (teacher.working_status || 'Active') === 'Active' ? '#f0fdf4' : '#fef2f2',
+                            color: (teacher.working_status || 'Active') === 'Active' ? '#166534' : '#991b1b',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <option value="Active">Active</option>
+                          <option value="Inactive">Inactive</option>
+                        </select>
+                      ) : (
+                        <span style={{ color: 'var(--muted)', fontSize: '0.875rem' }}>N/A</span>
+                      )}
                     </td>
                     <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
