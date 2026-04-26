@@ -18,6 +18,7 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
     dateOfJoining: new Date().toISOString().split('T')[0],
     batchId: '',
     feesPlan: 'monthly',
+    monthly_fee: '',
     subjects: lead.subjects || ''
   });
 
@@ -53,7 +54,8 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
             phone: lead.phone,
             enrollment_date: formData.dateOfJoining,
             batchId: formData.batchId,
-            batchName: batches.find(b => b.batch_id === formData.batchId)?.name
+            batchName: batches.find(b => b.batch_id === formData.batchId)?.name,
+            fees: formData.monthly_fee ? parseFloat(formData.monthly_fee) : 0
           }
         })
       });
@@ -158,17 +160,34 @@ export default function LeadConversionForm({ lead, onSuccess, onCancel }: LeadCo
         </div>
 
         <div className="form-group">
-          <label style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', display: 'block' }}>Subjects</label>
+          <label style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', display: 'block' }}>Monthly Fee (₹) *</label>
           <div style={{ position: 'relative' }}>
-            <BookOpen size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontWeight: '600', fontSize: '0.9rem' }}>₹</span>
             <input 
-              type="text" 
-              readOnly
+              type="number" 
+              required
+              min="0"
               className="input" 
-              value={formData.subjects}
-              style={{ paddingLeft: '2.5rem', backgroundColor: 'var(--secondary)' }}
+              placeholder="e.g. 3000"
+              value={formData.monthly_fee}
+              onChange={(e) => setFormData({...formData, monthly_fee: e.target.value})}
+              style={{ paddingLeft: '2rem' }}
             />
           </div>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem', display: 'block' }}>Subjects</label>
+        <div style={{ position: 'relative' }}>
+          <BookOpen size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+          <input 
+            type="text" 
+            readOnly
+            className="input" 
+            value={formData.subjects}
+            style={{ paddingLeft: '2.5rem', backgroundColor: 'var(--secondary)' }}
+          />
         </div>
       </div>
 

@@ -65,9 +65,12 @@ export async function POST(req: Request) {
 
     // 3. Write data to relevant role-based tables
     if (role.toUpperCase() === 'TEACHER') {
+      // Upsert teacher record, keyed on email. If teacher already existed
+      // (e.g. added manually before account creation), we update their teacher_id
+      // to the new Auth UUID so all FKs stay consistent.
       const { error: teacherError } = await supabaseAdmin.from('teachers').upsert(
         { 
-          teacher_id: userId, 
+          teacher_id: userId,
           name, 
           email, 
           phone: details?.phone || '', 
@@ -78,16 +81,27 @@ export async function POST(req: Request) {
       );
       if (teacherError) throw new Error(`Teacher insert/update failed: ${teacherError.message}`);
 
-      // Insert into teachers_rate_card
-      const { error: rateCardError } = await supabaseAdmin.from('teachers_rate_card').insert([
+      // Fetch the actual teacher_id that was stored (may differ from userId if
+      // the upsert matched an existing row with a different PK).
+      const { data: teacherRow, error: fetchError } = await supabaseAdmin
+        .from('teachers')
+        .select('teacher_id')
+        .eq('email', email)
+        .single();
+      if (fetchError) throw new Error(`Teacher fetch failed: ${fetchError.message}`);
+      const actualTeacherId = teacherRow.teacher_id;
+
+      // Upsert rate card using the real teacher_id (handles duplicate-key errors too)
+      const { error: rateCardError } = await supabaseAdmin.from('teachers_rate_card').upsert(
         {
-          teacher_id: userId,
+          teacher_id: actualTeacherId,
           class_1_to_4_rate: details?.class_1_to_4_rate || 0,
           class_5_to_8_rate: details?.class_5_to_8_rate || 0,
           class_9_to_10_rate: details?.class_9_to_10_rate || 0
-        }
-      ]);
-      if (rateCardError) throw new Error(`Teacher rate card insert failed: ${rateCardError.message}`);
+        },
+        { onConflict: 'teacher_id' }
+      );
+      if (rateCardError) throw new Error(`Teacher rate card upsert failed: ${rateCardError.message}`);
     } else if (role.toUpperCase() === 'STUDENT') {
       const { error: studentError } = await supabaseAdmin.from('students').insert([
         { 
