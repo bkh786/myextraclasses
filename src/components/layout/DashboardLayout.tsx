@@ -44,6 +44,7 @@ const TEACHER_LINKS = [
   { href: '/teacher/batches', icon: BookOpen, label: 'My Classes' },
   { href: '/teacher/attendance', icon: Calendar, label: 'Attendance' },
   { href: '/teacher/class-update', icon: Upload, label: 'Class Update' },
+  { href: '/teacher/assessments', icon: FileText, label: 'Assessments' },
   { href: '/teacher/performance', icon: BarChart3, label: 'Student Performance' },
   { href: '/teacher/earnings', icon: CreditCard, label: 'Earnings' },
   { href: '/teacher/profile', icon: User, label: 'Profile' },
