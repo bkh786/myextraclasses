@@ -84,9 +84,9 @@ export default function TeacherForm({ onSuccess, onCancel }: TeacherFormProps) {
         if (insertError) throw insertError;
         
         // Also insert into rate card if we have rates (even if not hired yet)
-        if (data && data.teacher_id) {
+        if (insertData && insertData.teacher_id) {
           await supabase.from('teachers_rate_card').insert([{
-            teacher_id: data.teacher_id,
+            teacher_id: insertData.teacher_id,
             class_1_to_4_rate: formData.class_1_to_4_rate ? parseFloat(formData.class_1_to_4_rate) : 0,
             class_5_to_8_rate: formData.class_5_to_8_rate ? parseFloat(formData.class_5_to_8_rate) : 0,
             class_9_to_10_rate: formData.class_9_to_10_rate ? parseFloat(formData.class_9_to_10_rate) : 0
